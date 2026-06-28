@@ -54,6 +54,14 @@ do swaps with **no server** for **data the browser already has**. But:
   "No server" only holds for local data.
 - Client mode **ships a JS runtime** (WDL.js + data) → you forfeit zero-JS/pure-HTML. Deliberate, per page.
 
+> **PRIORITY DECISION (2026-06-28): client mode is the LOWEST priority — do it LAST, after everything
+> else.** Reason: **HTMx already covers client-side JSON→HTML** via its `client-side-templates`
+> extension (mustache/handlebars/nunjucks/XSLT, incl. an *array* variant for lists) and the
+> `htmx:afterRequest` JSON pattern — so the browser-renders-JSON need is largely solved by the stack we
+> pass through, consistent with the no-wrapper rule (§3.1/§6). Implication: when we *do* reach client
+> mode, prefer **interop** — e.g. WDL as an HTMx client-side template engine, or just lean on the
+> existing extension — over building a from-scratch WDL client renderer. Static + edge modes come first.
+
 ### The discipline that keeps WDL from becoming React (hard rule)
 - **No virtual DOM, no reconciler, no fine-grained reactive binding in WDL.** Client mode does
   **coarse fragment swaps only** — recompute a fragment's HTML string, `innerHTML`-swap it (HTMx's
@@ -188,10 +196,20 @@ trust-boundary guarantee across the bridge.
 - Versioning/open-core boundary: language open, CMS/runtime proprietary?
 
 ## 5. Phasing (PLAN order — still no build until agreed)
-1. **Specs first** (this doc → detailed sub-specs for §3.1–3.8). No code.
+1. **Specs first** (this doc → detailed sub-specs). No code.
 2. Prototype in the **sandbox only**, one pillar at a time, each behind the byte-diff/parity discipline.
 3. Re-evaluate host injection (RuledWeb) only after the language stabilizes AND live projects are past
    launch — per the standing decision. Not now.
+
+**Pillar priority (decided 2026-06-28).** Lead with the modes/needs that are real now; client mode is LAST:
+1. **Static-build (SSG, §3.7)** + **edge-hypermedia** (native HTMx pass-through, §3.1) — the two modes
+   with immediate value; everything renders via the store seam we already have.
+2. **Fragments & boundaries (§3.3), lifecycle (§3.4), hooks (§3.5), 3rd-party data (§3.6)** — the runtime spine.
+3. **Interop (§3.9)** as the language stabilizes.
+4. **Client mode (browser WDL.js)** — **LOWEST priority, do last.** HTMx's `client-side-templates`
+   extension + `htmx:afterRequest` already cover client-side JSON→HTML, so this need is largely met by the
+   pass-through stack; when reached, prefer interop (WDL as an HTMx client-side template engine) over a
+   from-scratch client renderer.
 
 ## 6. Non-goals (keep WDL small and itself)
 - **Never wrap Tailwind / Alpine / HTMx in a WDL dialect — pass them through natively.** Models already
