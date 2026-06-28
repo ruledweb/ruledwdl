@@ -149,11 +149,20 @@ emit**. Define pre/post stages for each. This is where data injection, actions, 
 Named extension points around each lifecycle phase (e.g. `beforeResolve`, `afterCompose`, `transformEmit`)
 so plugins/sources/integrations attach without forking the renderer. Define the hook signature + ordering.
 
-### 3.6 Third-party data injection
-Pages/components **declare external data sources** (beyond the store's `executeQuery`), e.g.
-`"sources": [{ id, from, inject_as, mode }]`, resolved in the lifecycle and merged into DATA. Decide
-where each source resolves per mode: **build** (snapshot/fixture), **edge** (live fetch, cached),
-**client** (fetch then WDL render). Caching, auth, and failure semantics.
+### 3.6 Third-party data injection — SERVER/BUILD-side only (cede client data to Alpine)
+WDL's job here is the part the stack does **not** do: resolve external data **server/build-side** and
+**bake it into DATA before render** (SEO-friendly, static-able, no client fetch). Pages/components
+**declare external data sources** (beyond the store's `executeQuery`), e.g.
+`"sources": [{ id, from, inject_as, mode }]`, resolved in the lifecycle and merged into DATA. Per mode:
+**build** (snapshot/fixture) and **edge** (live fetch, cached). Decide caching, auth, failure semantics.
+
+**Boundary decision (2026-06-28): client-side data/stores are Alpine's job — do NOT rebuild them.**
+Alpine already provides the client data layer: `Alpine.store()` / `$store` (global reactive store),
+native **fetch** for REST/3rd-party APIs, and the **Persist** plugin (state across loads). Consistent
+with the no-wrapper rule (§6) and client-mode-last (§5): WDL owns **server/build-resolved DATA → HTML**;
+**client-side fetching/state/persistence pass through to Alpine** (and server-driven fragment data to
+HTMx). So drop the "client (fetch then WDL render)" mode here — that's Alpine + the (low-priority) client
+renderer, not a WDL data-source responsibility.
 
 ### 3.7 Static-build path (SSG)
 `wdl build <project-dir> <out-dir>` → render every page in a store to plain `.html` (+ assets) → deploy
