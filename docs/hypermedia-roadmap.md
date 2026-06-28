@@ -63,6 +63,42 @@ do swaps with **no server** for **data the browser already has**. But:
 
 ---
 
+## 2b. Landscape & positioning — the Generative UI ("UI as data") category
+
+The category went mainstream in late 2025/2026: Google open-sourced **A2UI** (v0.9, headlined at I/O 2026),
+and Anthropic+OpenAI standardized **MCP-UI**. This **validates WDL's core bet** — *UI as data, no executable
+code* — and pins down where WDL sits. The 2026 agent stack has **two layers; don't conflate them**:
+
+- **Transports (how events move):** **MCP** (agent↔tools) · **A2A** (agent↔agent) · **AG-UI** (agent↔UI, an
+  SSE event stream, bi-directional).
+- **UI-as-data specs (what the UI *is*, declarative JSON, no shipped code):** **A2UI** (Google → native
+  widgets, Flutter-first) · **Adaptive Cards** (Microsoft → host-app cards) · **MCP-UI** (Anthropic/OpenAI →
+  React inline in ChatGPT).
+
+**WDL is in the UI-as-data family** (same DNA: declarative JSON, AI-authored, no executable code) — but every
+peer targets a **conversational/host surface** rendering **ephemeral UI per agent turn**. WDL targets the one
+surface none of them own: **the open web — persistent, SEO-able, edge-rendered whole sites** (hypermedia
+stack), backed by a CMS (RuledWeb).
+
+| | Render target | Scope | Lifetime | Host |
+|---|---|---|---|---|
+| A2UI | native widgets (Flutter/web) | component/view | per turn | an app |
+| Adaptive Cards | host-app cards | card | per message | Teams/Outlook |
+| MCP-UI / OpenAI Apps | React in ChatGPT | inline panel | per turn | the chat |
+| **WDL** | **HTML / hypermedia** | **whole pages & sites** | **persistent, hosted** | **the open web (edge)** |
+
+Same thesis, **different target + scope: "generative UI for the web/sites," not "for chat surfaces."**
+
+- **Edges:** open-web HTML target (SEO, links) not a host sandbox; **whole sites + CMS + edge persistence**
+  (not transient widgets); isomorphic (static/edge/client); natively aligned with the "no executable code" thesis.
+- **Risks (clear-eyed):** A2UI is framework-agnostic and will likely grow a **web/HTML renderer** → the one
+  that could encroach. If it does, WDL's moat is **scope (whole sites) + CMS + edge hosting**, not the JSON
+  format (which commoditizes). Do **not** try to out-standardize Google/MS/OpenAI on chat widgets — own the
+  *website* surface.
+- **Posture:** own "generative UI for websites"; **interoperate** with the protocol stack rather than rival it
+  (see §3.9). One-liner: *"an agent uses MCP for tools, A2UI for in-app widgets, and **WDL for the actual
+  website it builds and hosts.**"*
+
 ## 3. Design pillars to specify (the actual roadmap work)
 
 Each is a *spec to write*, not code to ship yet.
@@ -113,6 +149,23 @@ have a clean implementation per mode: **FileStore** (build), **D1/KV or API** (e
 
 ---
 
+### 3.9 Interop with the agent protocol stack (be a citizen, not a rival)
+Make WDL a first-class payload in the emerging stack (§2b) instead of competing with it:
+- **Deliverable over AG-UI** — WDL fragments/pages streamed to a frontend over the AG-UI event transport
+  (pairs naturally with the isomorphic client/edge modes).
+- **A2UI ↔ WDL mapping** — a translation layer to/from A2UI (a.k.a. Open-JSON-UI): *import* an agent's A2UI
+  description and render it as a WDL page/site; optionally *export* WDL → A2UI for in-app surfaces. Watch
+  A2UI's web/HTML render target — interop there, or differentiate on CMS/edge/whole-site scope.
+- **MCP-UI web resource** — expose WDL-rendered pages/fragments as MCP-UI resources so MCP hosts (ChatGPT
+  Apps, Claude) can embed a WDL-built site or live preview. (We already run an MCP server + have MCP Apps UI
+  experience — see RuledWeb `mcp/app-ui.js`.)
+- **Boundary decision:** WDL **owns** the persistent web-site surface; **cede** ephemeral chat widgets to
+  A2UI / Adaptive Cards / MCP-UI.
+
+Decisions: which transport is primary; mapping fidelity (WDL is richer — *whole sites* — than a single A2UI
+view, so the mapping is lossy in the WDL→A2UI direction); preserving the "UI as data, no executable code"
+trust-boundary guarantee across the bridge.
+
 ## 4. Open questions / decisions to make in planning
 - Client runtime packaging: how WDL.js + the needed WDL JSON + data ship to the browser (one bundle?
   per-fragment lazy?). Keep it KB-scale.
@@ -135,5 +188,13 @@ have a clean implementation per mode: **FileStore** (build), **D1/KV or API** (e
 
 ---
 
-*References: `../README.md` (package), RuledWeb `docs/generative-ui/wdl-ruledweb-separation.md`,
+*References (internal): `../README.md` (package), RuledWeb `docs/generative-ui/wdl-ruledweb-separation.md`,
 `docs/plan/renderer-lifecycle-extensibility.md`, `docs/GTM Tasks/03-renderer-as-library.md`.*
+
+*Generative-UI landscape (external, verified 2026-06):*
+- Google A2UI v0.9 — https://developers.googleblog.com/a2ui-v0-9-generative-ui/
+- A2UI announcement — https://www.marktechpost.com/2025/12/22/google-introduces-a2ui-agent-to-user-interface-an-open-sourc-protocol-for-agent-driven-interfaces/
+- AG-UI — https://docs.ag-ui.com/introduction
+- State of Agentic UI (AG-UI vs MCP-UI vs A2UI) — https://www.copilotkit.ai/blog/the-state-of-agentic-ui-comparing-ag-ui-mcp-ui-and-a2ui-protocols
+- 2026 agent protocol stack (A2A/MCP/AG-UI/A2UI) — https://medium.com/@visrow/a2a-mcp-ag-ui-a2ui-the-essential-2026-ai-agent-protocol-stack-ee0e65a672ef
+- Microsoft Adaptive Cards — https://microsoft.github.io/copilot-camp/pages/extend-m365-copilot/05-add-adaptive-card/
