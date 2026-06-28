@@ -103,18 +103,30 @@ Same thesis, **different target + scope: "generative UI for the web/sites," not 
 
 Each is a *spec to write*, not code to ship yet.
 
-### 3.1 Actions — WDL vocabulary for HTMx (`hx-*`)
-How does a WDL component **declare an action** without hand-writing `hx-` attributes? Define a WDL-level
-shape, e.g. an `action` block on a component/element: `{ on, get|post, target, swap, params, indicator }`
-→ compiles to the right `hx-get`/`hx-target`/`hx-swap`/… Decide:
-- The **fragment endpoint contract**: a request that returns a WDL-rendered fragment (which page/
-  component/slug + what DATA scope). How the edge runtime routes it.
-- Same `action` shape should be retargetable to **client mode** (resolve locally) vs **edge mode**
-  (HTMx round-trip) without rewriting the component — the isomorphic promise.
+### 3.1 Actions — native HTMx pass-through (NO wrapper) — DECISION 2026-06-28
+**Do NOT invent a WDL "action vocabulary" that wraps `hx-*`.** WDL's whole advantage is that models
+already know HTMx/Tailwind/Alpine zero-shot (millions of training examples). A wrapper forfeits exactly
+that: the AI would have to *learn* our dialect → worse generation, a leaky abstraction (never covers all
+of HTMx), and a mapping layer we maintain. WDL's `attr` block **already passes native attributes through**,
+so `hx-get`/`hx-target`/`hx-swap`/… are expressible *today* with nothing new to learn. WDL owns
+**structure / composition / data / runtime**, not the leaf vocabularies.
 
-### 3.2 Interactions — WDL vocabulary for Alpine (`x-*`)
-A first-class way to attach local behavior/state (`x-data`, `x-show`, `x-on`, transitions) from WDL
-without raw attribute soup. Decide how much to wrap vs pass-through. Keep Alpine opt-in (as today).
+The two things that *seemed* to need a wrapper are solved with **native attributes + thin conventions**:
+- **Fragment endpoints** (point at WDL, not a raw URL): a **URL convention** — e.g. `hx-get="/_wdl/posts"`
+  — still native `hx-get`; the edge runtime routes `/_wdl/<fragment>` to a WDL-rendered fragment (which
+  component/slug + DATA scope). No new keyword.
+- **Isomorphism (client mode)**: a tiny **client interpreter that reads the SAME native `hx-` attributes**
+  and renders the fragment locally — HTMx-compatible attributes, alternate executor. Native authoring AND
+  client mode, no DSL.
+- **Bounded-parity caveat:** full client-side HTMx parity is limited (SSE, history, out-of-band swaps assume
+  a server). Scope client mode to the sensible subset; the rest stays edge/server. (Runtime concern, not an
+  authoring one — the AI writes plain HTMx regardless.)
+
+### 3.2 Interactions — native Alpine pass-through (same rule)
+Same principle: **pass `x-data`/`x-show`/`x-on`/transitions through natively** via `attr` — do NOT wrap
+Alpine in a WDL dialect. Keep Alpine opt-in (as today). The only WDL-level concern is *ergonomics of
+authoring attributes in JSON* (and ensuring the `alpine-cdn` script loads when used), never re-inventing
+the `x-` vocabulary.
 
 ### 3.3 Fragments & boundaries
 - What is a **fragment** in WDL (a named, independently-renderable sub-tree of a page/component).
@@ -182,6 +194,10 @@ trust-boundary guarantee across the bridge.
    launch — per the standing decision. Not now.
 
 ## 6. Non-goals (keep WDL small and itself)
+- **Never wrap Tailwind / Alpine / HTMx in a WDL dialect — pass them through natively.** Models already
+  know those zero-shot; that fluency is WDL's core asset. A wrapper would force the AI to learn our
+  vocabulary (worse output, leaky, maintenance) and contradict the §2 thesis. WDL owns composition / data /
+  runtime; the leaf vocabularies stay themselves. (See §3.1, §3.2.)
 - No virtual DOM / reconciler / fine-grained reactivity (that's Alpine's lane / React's lane).
 - No build toolchain requirement (plain ES modules, runs in Node + Workers + browser).
 - Not for heavy client apps. Not a JS framework. A **design language** + a small isomorphic renderer.
