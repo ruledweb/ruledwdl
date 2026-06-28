@@ -1,11 +1,25 @@
 {
   "slug": "/",
-  "title": "Home",
+  "title": "WDL Demo",
   "layout": "base",
   "REGISTRY": {},
   "COMPONENTS": [
-    { "emmet": "h1.hero", "attr": { ".hero": { "text": "Hello ${name}" } } },
-    { "emmet": "p.lead", "attr": { ".lead": { "text": "Welcome to WDL" } } }
+    {
+      "emmet": "div.card.bg-white.rounded-2xl.shadow-xl.p-10.max-w-md.w-full.text-center>div.badge.inline-block.text-xs.font-bold.tracking-widest.uppercase.text-indigo-500.mb-4+h1.title.text-4xl.font-extrabold.text-slate-900.mb-3+p.subtitle.text-slate-500.mb-7+div.tags.flex.flex-wrap.justify-center.gap-2>span.tag.text-xs.font-semibold.bg-indigo-50.text-indigo-700.px-3.py-1.rounded-full.border.border-indigo-100*tags",
+      "attr": {
+        ".badge": { "text": "@wdl/core" },
+        ".title": { "text": "Hello ${name} 👋" },
+        ".subtitle": { "text": "This page was rendered from a folder of JSON — no Cloudflare, no database. Just the WDL runtime." },
+        ".tag": { "text": "${label}" }
+      }
+    }
   ],
-  "DATA": { "name": "World" }
+  "DATA": {
+    "name": "World",
+    "tags": [
+      { "label": "lifecycle" },
+      { "label": "hooks" },
+      { "label": "3rd-party data" }
+    ]
+  }
 }
