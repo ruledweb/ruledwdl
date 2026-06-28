@@ -1,0 +1,21 @@
+{
+  "name": "@wdl/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WDL renderer — the language runtime, host-agnostic. Renders WDL JSON (REGISTRY/COMPONENTS/DATA) to HTML given a pluggable store. RuledWeb is one runtime; any project can embed this.",
+  "exports": {
+    ".": "./src/index.js",
+    "./file-store": "./src/stores/file-store.js"
+  },
+  "bin": {
+    "wdl": "./bin/wdl.js"
+  },
+  "scripts": {
+    "test": "node test/smoke.test.js"
+  },
+  "dependencies": {
+    "marked": "^12.0.2"
+  },
+  "license": "UNLICENSED"
+}

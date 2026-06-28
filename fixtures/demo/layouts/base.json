@@ -1,0 +1,8 @@
+{
+  "name": "base",
+  "REGISTRY": {},
+  "COMPONENTS": [
+    { "emmet": "div.wrap", "attr": { ".wrap": { "text": "{{content}}" } } }
+  ],
+  "DATA": {}
+}

@@ -1,0 +1,11 @@
+{
+  "slug": "/",
+  "title": "Home",
+  "layout": "base",
+  "REGISTRY": {},
+  "COMPONENTS": [
+    { "emmet": "h1.hero", "attr": { ".hero": { "text": "Hello ${name}" } } },
+    { "emmet": "p.lead", "attr": { ".lead": { "text": "Welcome to WDL" } } }
+  ],
+  "DATA": { "name": "World" }
+}
