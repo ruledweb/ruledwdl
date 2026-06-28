@@ -26,6 +26,23 @@ makes the *entire* app authorable by an AI (JSON + `class`/`x-`/`hx-` attributes
 the unifying layer — the AI writes WDL; WDL knows how to emit the right Tailwind classes, Alpine
 directives, HTMx hooks, and fragment boundaries.
 
+**Stack-agnostic at the leaf level (a free consequence of native pass-through, §3.1/§6).** htmx+Alpine
+use `hx-`/`x-` attributes; **Datastar** — the single-library *combination* of htmx + Alpine
+(`data-*` attributes for both server-hypermedia AND reactivity, SSE-based, ~14 KB) — uses `data-*`;
+**Alpine AJAX** adds htmx-style server calls to Alpine. To WDL these are **all just attributes** in the
+`attr` block — WDL renders whichever the author wrote and never couples to one. So a "combination" lib
+is a *third valid pass-through target*, not a fork in the road.
+- **Default target: htmx + Alpine + Tailwind** — highest AI zero-shot fluency *today* (huge training
+  footprint), per the same logic that killed the wrapper (§3.1).
+- **Datastar: watch-item / optional target** — newer, smaller training footprint → the AI is less fluent
+  in its `data-*` semantics now; revisit as adoption grows. Its standout is **SSE real-time** (edge-pushed
+  live updates) — a capability htmx+Alpine lack, which RuledWeb's edge could serve when a real-time use
+  case appears.
+
+**Non-goal:** competing with React/SPA for heavy client apps (complex local state, offline, canvas,
+realtime, design-tool-grade UIs). Hypermedia targets the ~80% that is content + forms + CRUD +
+mostly-server-driven UIs. Do not chase the 20%.
+
 **Non-goal:** competing with React/SPA for heavy client apps (complex local state, offline, canvas,
 realtime, design-tool-grade UIs). Hypermedia targets the ~80% that is content + forms + CRUD +
 mostly-server-driven UIs. Do not chase the 20%.
