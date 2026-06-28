@@ -5,8 +5,11 @@ The **WDL renderer** — the language runtime, **host-agnostic**. It renders WDL
 RuledWeb is one runtime; any project can embed this. No build step, no TypeScript — plain ES
 modules that run in **Node** and the **Cloudflare Workers** runtime.
 
-> Status: **0.1.0 — standalone, not yet wired into any project.** Stabilizing in isolation first
-> (byte-diff parity against RuledWeb) before it's injected anywhere.
+> Status: **0.1.0 — standalone R&D sandbox. DO NOT wire into any live/launching project.**
+> Rendering works; production-readiness is **unconfirmed**. This is the isolated ground for the
+> broader WDL roadmap — **lifecycle, hooks, third-party data injection**, and more — so live
+> projects (currently launching) are never destabilized by experimentation. Injecting it into a
+> host is explicitly deferred; not a near-term goal.
 
 ## Install (local)
 ```jsonc
