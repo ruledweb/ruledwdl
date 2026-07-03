@@ -1,0 +1,18 @@
+{
+  "name": "wdl-core-frontend-vite-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Example: consuming @wdl/core as an npm dependency from inside a bundler-based frontend project (Vite), the same way you'd use it from a React/Vue/Svelte app.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@wdl/core": "file:../.."
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

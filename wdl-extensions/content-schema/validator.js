@@ -1,4 +1,6 @@
-// src/renderer/validator.js
+// wdl-extensions/content-schema/validator.js — authoring-time validation, not used by composePage.
+// validateDataAgainstSchema checks page DATA against a CMS "content type" schema; validateComponentId /
+// validatePluginComponentId enforce naming conventions for a component registry/plugin marketplace.
 
 export function validateDataAgainstSchema(data, schema) {
   if (!schema) return { valid: true, errors: [] };

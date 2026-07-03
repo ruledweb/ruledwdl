@@ -6,8 +6,11 @@
 // Convention (relative to <root>):
 //   layouts/<name>.json          components/<id>.json        scripts/<id>.json
 //   system/<id>.json             forms/<id>.json             pages/<slug>.json   ('/' → index.json)
-//   design/tokens.json           design/registry.json (or registry.json)         plugins.json
+//   design/registry.json (or registry.json)                  plugins.json
 //   queries/<id>.result.json     ({ inject_as, data } fixture for a dynamic component)
+//
+// Design/brand tokens are NOT read here — they're authored in WDL JSON itself
+// (DATA.__design_tokens / DATA.__brand_tokens on layouts/pages), not fetched via the store.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -25,7 +28,6 @@ export function createFileStore(root) {
     getScript:            async (_p, id)   => read('scripts', id + '.json'),
     getSystemComponent:   async (_p, id)   => read('system', id + '.json'),
     getForm:              async (_p, id)   => read('forms', id + '.json'),
-    getDesignTokens:      async (_p)       => read('design', 'tokens.json'),
     getComponentRegistry: async (_p)       => read('design', 'registry.json') || read('registry.json') || {},
     listPlugins:          async (_p)       => read('plugins.json') || [],
     executeQuery:         async (_p, q)    => read('queries', qid(q) + '.result.json'),

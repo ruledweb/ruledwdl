@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>@wdl/core inside a frontend bundler</title>
+</head>
+<body>
+  <h1>Frontend app shell</h1>
+  <p>The block below is authored as WDL JSON and rendered by <code>@wdl/core</code> — everything
+  else on this page is normal bundler-managed frontend code.</p>
+
+  <!--
+    composePage() returns a full HTML document, so — same reasoning as the plain-html example —
+    it's hosted in an iframe rather than injected into this page's own DOM. If you only need a
+    fragment (no <html>/<head> shell), call renderAll(REGISTRY, COMPONENTS, DATA) directly instead
+    of composePage(); that returns a plain HTML string safe to drop into innerHTML/dangerouslySetInnerHTML.
+  -->
+  <iframe id="wdl-block" title="WDL-rendered content" style="width:100%;height:300px;border:1px solid #ddd;"></iframe>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

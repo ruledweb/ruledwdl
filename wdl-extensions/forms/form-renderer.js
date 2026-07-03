@@ -1,21 +1,20 @@
-// src/renderer/form-renderer.js — turns a saved form definition into <form> HTML.
+// wdl-extensions/forms/form-renderer.js — turns a saved form definition into <form> HTML.
 //
-// Pure function (no I/O): the D1 read of the form definition happens in
-// resolveComponent (layout-composer.js); this module only renders. That keeps
-// the renderer @wdl/core-extractable like the rest of src/renderer/*.
+// Pure function (no I/O): loading the form definition and wiring it into a page is index.js's
+// job (createFormResolver, plugged into composePage via opts.resolveComponent); this module only
+// renders markup given a form object already in hand.
 //
 // A page references a saved form with:
 //   { "component": "form", "data_overrides": { "form_id": "contact" } }
-// resolveComponent loads the form by id and calls renderForm().
 //
 // Styling is SELF-CONTAINED — a scoped <style> block shipped inside the form
 // HTML, NOT Tailwind utilities. A form is a critical interactive widget that
-// must render correctly regardless of Global-G state (first render, stale cache,
+// must render correctly regardless of host CSS-delivery state (first render, stale cache,
 // or classes Tailwind can't emit — the old honeypot relied on `-left-[5000px]`,
 // which Tailwind v4 never generated, leaving the honeypot VISIBLE and silently
 // dropping real submissions). The scoped <style> ships with every form render,
 // so forms never depend on the page stylesheet.
-import { esc } from './element-builder.js';
+import { esc } from '../../src/element-builder.js';
 
 const TURNSTILE_API = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";

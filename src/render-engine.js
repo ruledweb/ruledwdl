@@ -4,9 +4,9 @@ import { toHTML, esc } from './element-builder.js';
 
 export function renderAll(REG, COMPS, DAT) {
   return COMPS.map(comp => {
-    // Raw-HTML escape hatch: a resolved component may emit finished HTML instead
-    // of an emmet string (e.g. the system "form" component — see resolveComponent
-    // / form-renderer.js). Emitted verbatim; the producer is responsible for esc.
+    // Raw-HTML escape hatch: a resolved component may emit finished HTML instead of an emmet
+    // string (e.g. a `resolveComponent` extension hook returning pre-rendered markup, like
+    // wdl-extensions/forms). Emitted verbatim; the producer is responsible for esc.
     if (comp._raw_html != null) return comp._raw_html;
     return parseEmmet(comp.emmet || 'div')
       .map(n => toHTML(n, comp.attr || {}, DAT, REG))

@@ -1,15 +1,17 @@
-// src/renderer/email-renderer.js — render a WDL email template to HTML.
+// wdl-extensions/email/email-renderer.js — render a WDL email template to HTML.
 //
 // Reuses the same WDL→HTML engine as pages (`renderAll`), so emails are authored
-// as WDL JSON ({ subject?, REGISTRY?, COMPONENTS, DATA? }). Pure (no I/O — the D1
-// template load happens in the caller), keeping it @wdl/core-extractable.
+// as WDL JSON ({ subject?, REGISTRY?, COMPONENTS, DATA? }). Pure (no I/O — loading
+// the template by id is the caller's job, see index.js).
 //
 // Email rules differ from web pages: clients strip <style>/external CSS and don't
 // run JS, so templates use INLINE styles (REGISTRY `style` tokens by class, or
-// attr.style), table/block layout, and ABSOLUTE URLs. No Tailwind CDN, no
-// Global-G, no web <head> shell. See docs/plan/email-templates-wdl.md.
-import { renderAll } from './render-engine.js';
-import { resolveStr } from './data-resolver.js';
+// attr.style), table/block layout, and ABSOLUTE URLs. No Tailwind CDN, no web
+// <head> shell. renderEmailTemplate calls renderAll directly (bypassing
+// composePage's component resolution), so templates are emmet-only — no
+// { "component": ... } refs, no plugins/system components.
+import { renderAll } from '../../src/render-engine.js';
+import { resolveStr } from '../../src/data-resolver.js';
 
 // Minimal email-safe document shell — charset + viewport + a neutral page bg.
 export function wrapEmailDoc(bodyHtml, { lang = 'en' } = {}) {
@@ -69,7 +71,7 @@ export const DEFAULT_EMAIL_TEMPLATE = {
     },
   ],
   DATA: {
-    site_name: 'RuledWeb',
+    site_name: 'Your Site',
     heading:   'New form submission',
     cta_label: 'View submission',
     cta_url:   '#',

@@ -1,10 +1,11 @@
 // @wdl/core — layout-composer.js
 // Host-agnostic composition. All structured reads go through an injected `store` (see store.js) —
-// NEVER imports D1/KV/env. Logic is a 1:1 port of RuledWeb's renderer so output is byte-identical;
-// only the data source is abstracted. CSS delivery + turnstile key + head injection are options.
+// NEVER imports D1/KV/env. Pure renderer core: layout chaining, REGISTRY/DATA merging, script bucket
+// dedup, slot injection, design-token cascade. CMS-flavored features (forms, saved queries, plugins,
+// system components, per-page CSS override) live in wdl-extensions/* and plug in via the
+// `resolveComponent`/`extraScripts` hooks below — core has no built-in knowledge of any of them.
 import { renderAll, wrapPage } from './render-engine.js';
 import { resolvePath } from './data-resolver.js';
-import { renderForm } from './form-renderer.js';
 
 const SLOT = '{{content}}';
 
@@ -24,85 +25,33 @@ export async function resolveLayoutChain(store, project, layoutName) {
 }
 
 export async function loadDesignContext(store, project) {
-  const [tokens, componentRegistry, plugins] = await Promise.all([
-    store.getDesignTokens(project),
-    store.getComponentRegistry(project),
-    store.listPlugins(project),
-  ]);
-  return { tokens, componentRegistry, plugins: plugins || [] };
+  const componentRegistry = await store.getComponentRegistry(project);
+  return { componentRegistry };
 }
 
+// Default component resolver: project-local lookup only (store.getComponent). Returns null when
+// `compId` isn't found locally (NOT a passthrough fallback) so it composes correctly with
+// wdl-extensions/compose.js's composeResolvers — a null result means "try the next tier",
+// letting plugins/system-components/etc. take over. composePage supplies the final fallback
+// if every resolver (including this one) comes back empty.
 export async function resolveComponent(store, project, block, designCtx) {
   if (block.emmet) return { ...block, _script_deps: [] };
 
   const compId = block.component;
   if (!compId) return { ...block, _script_deps: [] };
 
-  // System "form" component — renders a saved form definition (loaded by id) into finished <form>
-  // HTML via form-renderer.js. The page only references the form by id; fields/honeypot/turnstile
-  // come from the stored definition (single source of truth). Emitted through the _raw_html hatch.
-  if (compId === 'form') {
-    const o = block.data_overrides || {};
-    const formId = o.form_id;
-    const form = formId ? await store.getForm(project, formId) : null;
-    if (!form) {
-      return { _raw_html: `<!-- rw:form '${formId || ''}' not found -->`, _script_deps: [] };
-    }
-    const html = renderForm(form, {
-      siteKey:     designCtx?.turnstileSiteKey || null,
-      submitLabel: o.submit_label || 'Send',
-    });
-    return { _raw_html: html, _script_deps: [] };
-  }
-
-  let def = null;
-
-  // 1. Project-local
-  def = await store.getComponent(project, compId);
-
-  // 2. Plugins
-  if (!def && designCtx?.plugins?.length) {
-    for (const plugin of designCtx.plugins) {
-      const found = plugin.components?.find(c => c.id === compId);
-      if (found) { def = found; break; }
-    }
-  }
-
-  // 3. System components (read-only)
-  if (!def && store.getSystemComponent) {
-    const sys = await store.getSystemComponent(project, compId);
-    if (sys) def = sys;
-  }
-
-  if (!def) return { ...block, _script_deps: [] };
-
-  let _data_injection = null;
-  if (def.data_query && store.executeQuery) {
-    const qResult = await store.executeQuery(project, def.data_query);
-    if (qResult) _data_injection = { [qResult.inject_as]: qResult.data };
-  }
+  const def = await store.getComponent(project, compId);
+  if (!def) return null;
 
   return {
-    emmet:           def.emmet,
-    attr:            { ...def.attr, ...(block.style_overrides || {}) },
-    _script_deps:    def.script_deps || [],
-    _data_injection,
+    emmet:        def.emmet,
+    attr:         { ...def.attr, ...(block.style_overrides || {}) },
+    _script_deps: def.script_deps || [],
   };
 }
 
-export async function resolveScriptDef(store, project, scriptId, designCtx) {
-  const script = await store.getScript(project, scriptId);
-  if (script) return script;
-
-  if (designCtx?.plugins) {
-    for (const plugin of designCtx.plugins) {
-      if (plugin.scripts) {
-        const found = plugin.scripts.find(s => s.id === scriptId);
-        if (found) return found;
-      }
-    }
-  }
-  return null;
+export async function resolveScriptDef(store, project, scriptId) {
+  return store.getScript(project, scriptId);
 }
 
 function evaluateCondition(condition, data) {
@@ -110,7 +59,9 @@ function evaluateCondition(condition, data) {
   return !!resolvePath(data, condition);
 }
 
-export async function collectAndDedupScripts(store, project, resolvedCOMPS, pageScripts, designCtx, pageDATA) {
+// extraScripts — optional array of script defs (or async fn(pageDATA) => script defs) supplied via
+// opts.extraScripts, e.g. by the plugins extension to inject plugin-manifest scripts.
+export async function collectAndDedupScripts(store, project, resolvedCOMPS, pageScripts, pageDATA, extraScripts) {
   const seen = new Set();
   const srcSeen = new Set();
   const buckets = { head_blocking: [], head_defer: [], body_end: [] };
@@ -126,15 +77,15 @@ export async function collectAndDedupScripts(store, project, resolvedCOMPS, page
     if (buckets[pos]) buckets[pos].push(s);
   }
 
-  // Plugin scripts
-  for (const plugin of designCtx?.plugins || []) {
-    for (const s of plugin.scripts || []) addScript(s);
-  }
+  // Extension-supplied scripts (e.g. plugin manifests) — resolved before component/page scripts
+  // so a page/component script with the same id can still win the dedup race.
+  const extra = typeof extraScripts === 'function' ? await extraScripts(pageDATA) : extraScripts;
+  for (const s of extra || []) addScript(s);
 
   // Component script_deps
   for (const comp of resolvedCOMPS) {
     for (const depId of comp._script_deps || []) {
-      const def = await resolveScriptDef(store, project, depId, designCtx);
+      const def = await resolveScriptDef(store, project, depId);
       if (def) addScript(def);
     }
   }
@@ -149,20 +100,50 @@ export async function collectAndDedupScripts(store, project, resolvedCOMPS, page
   return buckets;
 }
 
+// Collects DATA[key] across the layout chain (base→specific) then the page, same order/shape as
+// __head. Each contribution is a raw CSS string (or array of them) — concatenated in that order,
+// so later (more specific) contributions win the cascade for any custom property they redeclare.
+function collectCssTokens(key, chain, pageData) {
+  const parts = [
+    ...chain.flatMap(l => [].concat(l.DATA?.[key] || [])),
+    ...[].concat(pageData[key] || []),
+  ].filter(Boolean);
+  return parts.join('\n');
+}
+
+function tokenStyleTag(name, css) {
+  return css ? `<style data-wdl="${name}">${css}</style>` : '';
+}
+
+// Builds the design/brand-token <style> tags for one render: __design_tokens first (layered,
+// base layout → page), __brand_tokens second so it always wins any overlapping custom property
+// regardless of which level declared it — see docs/WDL-Reference.md "Design tokens".
+function buildTokenStyles(chain, pageData) {
+  return [
+    tokenStyleTag('design-tokens', collectCssTokens('__design_tokens', chain, pageData)),
+    tokenStyleTag('brand-tokens', collectCssTokens('__brand_tokens', chain, pageData)),
+  ].filter(Boolean);
+}
+
 // composePage(store, project, page, opts) → { html, dynamic }.
 //   store    — see store.js (the only data source; no env/D1/KV imports).
-//   opts.cssDelivery     — { mode:'cdn'|'inline'|'link', css?, href? }. When provided the renderer does
-//                          NO CSS I/O; when omitted it falls back to store.getPageCss (per-page override).
+//   opts.cssDelivery     — { mode:'cdn'|'inline'|'link', css?, href? }. Omit for CDN Tailwind.
+//                          Core does NO CSS I/O of its own — pass a pre-resolved value if your
+//                          host app looks up per-page CSS overrides.
 //   opts.headInject      — extra <head> strings (analytics/verification) appended after page __head.
-//   opts.turnstileSiteKey— public Turnstile site key for the form component (null → widget skipped).
-//   opts.skipStaticCss   — skip the legacy per-page CSS read.
-export async function composePage(store, project, page, { skipStaticCss = false, cssDelivery, headInject, turnstileSiteKey } = {}) {
+//   opts.resolveComponent(store, project, block, designCtx) — optional override called BEFORE the
+//                          default project-local lookup; return a resolved-component-shaped object
+//                          (or null/undefined to fall through to the default). This is how
+//                          wdl-extensions/{forms,plugins,system-components,queries} plug in without
+//                          core knowing about any of them.
+//   opts.extraScripts    — array (or async fn(pageDATA) => array) of extra script defs, e.g. from
+//                          the plugins extension's manifest scripts.
+export async function composePage(store, project, page, { cssDelivery, headInject, resolveComponent: resolveComponentOverride, extraScripts } = {}) {
   const pageREG   = page.REGISTRY   || {};
   const pageCOMPS = page.COMPONENTS || [];
   const pageDATA  = page.DATA       || {};
 
   const designCtx = await loadDesignContext(store, project);
-  designCtx.turnstileSiteKey = turnstileSiteKey || null;
 
   let mergedPageData = { ...pageDATA };
   let hasDynamicComponents = false;
@@ -170,7 +151,9 @@ export async function composePage(store, project, page, { skipStaticCss = false,
   const resolveBlocks = async (blocks) => {
     const out = [];
     for (const block of blocks || []) {
-      const resolved = await resolveComponent(store, project, block, designCtx);
+      const resolved = (resolveComponentOverride && await resolveComponentOverride(store, project, block, designCtx))
+        || await resolveComponent(store, project, block, designCtx)
+        || { ...block, _script_deps: [] };
       out.push(resolved);
       if (resolved._data_injection) {
         mergedPageData = { ...mergedPageData, ...resolved._data_injection };
@@ -190,24 +173,18 @@ export async function composePage(store, project, page, { skipStaticCss = false,
   }
   const allLayoutCOMPS = resolvedLayerCOMPS.flat();
 
-  let mergedReg = { ...(designCtx.componentRegistry || {}) };
-  for (const plugin of designCtx.plugins || []) {
-    if (plugin.registry_tokens) mergedReg = { ...mergedReg, ...plugin.registry_tokens };
-  }
-  mergedReg = { ...mergedReg, ...pageREG };
+  let mergedReg = { ...(designCtx.componentRegistry || {}), ...pageREG };
 
-  const scriptBuckets = await collectAndDedupScripts(store, project, [...resolvedCOMPS, ...allLayoutCOMPS], page.scripts || null, designCtx, mergedPageData);
+  const scriptBuckets = await collectAndDedupScripts(store, project, [...resolvedCOMPS, ...allLayoutCOMPS], page.scripts || null, mergedPageData, extraScripts);
 
   const seo = mergedPageData.__seo || null;
-  const css = cssDelivery !== undefined
-    ? cssDelivery
-    : ((!skipStaticCss && page.slug && store.getPageCss) ? await store.getPageCss(project, page.slug) : null);
+  const css = cssDelivery !== undefined ? cssDelivery : null;
 
   const ret = (html) => ({ html, dynamic: hasDynamicComponents });
   const inject = [].concat(headInject || []).filter(Boolean);
 
   if (!chain.length) {
-    const head0 = [...[].concat(mergedPageData.__head || []), ...inject].filter(Boolean);
+    const head0 = [...buildTokenStyles([], mergedPageData), ...[].concat(mergedPageData.__head || []), ...inject].filter(Boolean);
     return ret(wrapPage(renderAll(mergedReg, resolvedCOMPS, mergedPageData), page.title, scriptBuckets, seo, css, head0));
   }
 
@@ -224,6 +201,7 @@ export async function composePage(store, project, page, { skipStaticCss = false,
 
   if (chain[0]?.fullPage === true) return ret(html || '<!DOCTYPE html><html><body></body></html>');
   const headExtra = [
+    ...buildTokenStyles(chain, mergedPageData),
     ...chain.flatMap(l => [].concat(l.DATA?.__head || [])),
     ...[].concat(mergedPageData.__head || []),
     ...inject,
