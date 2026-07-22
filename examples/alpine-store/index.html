@@ -25,7 +25,7 @@
     independent Alpine <code>x-data</code> scopes; they share state only through a global
     <code>Alpine.store('ui', ...)</code>, registered by a <code>head_blocking</code> script
     declared as a <code>script_dep</code> — the pattern documented under "Cross-component state"
-    in docs/WDL-Reference.md.
+    in docs/ruledwdl-reference.md.
   </p>
 
   <div id="app"><!-- WDL output lands here --></div>
@@ -36,7 +36,7 @@
     const store = createMemoryStore({
       components: {
         'site-nav': {
-          emmet: 'nav.navbar>button.hamburger+span.brand',
+          layers: 'nav.navbar>button.hamburger+span.brand',
           attr: {
             '.hamburger': { alpine: { '@click': "$store.ui.drawerOpen = !$store.ui.drawerOpen" }, text: '☰' },
             '.brand':     { text: 'wdl-core + Alpine store demo' },
@@ -47,7 +47,7 @@
           script_deps: ['store-ui', 'alpine-cdn'],
         },
         'drawer': {
-          emmet: 'aside.drawer>p.drawer-text+button.close',
+          layers: 'aside.drawer>p.drawer-text+button.close',
           attr: {
             '.drawer':      { alpine: { 'x-show': '$store.ui.drawerOpen', 'x-transition': '' } },
             '.drawer-text': { text: "This panel is a **separate** WDL component from the button above — it only knows the drawer is open via \\$store.ui.drawerOpen." },
@@ -57,7 +57,7 @@
         },
       },
       scripts: {
-        // Registers the shared store before Alpine scans the DOM — see docs/WDL-Reference.md
+        // Registers the shared store before Alpine scans the DOM — see docs/ruledwdl-reference.md
         // "Cross-component state (limitation — use custom script for now)".
         'store-ui': {
           id: 'store-ui',
@@ -87,7 +87,7 @@
       COMPONENTS: [
         { component: 'site-nav' },
         { component: 'drawer' },
-        { emmet: 'main.content>p', attr: { p: { text: 'Click the ☰ button — it toggles the drawer above via the shared Alpine store.' } } },
+        { layers: 'main.content>p', attr: { p: { text: 'Click the ☰ button — it toggles the drawer above via the shared Alpine store.' } } },
       ],
       DATA: {},
     };

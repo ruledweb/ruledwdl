@@ -35,7 +35,7 @@ export async function loadDesignContext(store, project) {
 // letting plugins/system-components/etc. take over. composePage supplies the final fallback
 // if every resolver (including this one) comes back empty.
 export async function resolveComponent(store, project, block, designCtx) {
-  if (block.emmet) return { ...block, _script_deps: [] };
+  if (block.layers) return { ...block, _script_deps: [] };
 
   const compId = block.component;
   if (!compId) return { ...block, _script_deps: [] };
@@ -44,7 +44,7 @@ export async function resolveComponent(store, project, block, designCtx) {
   if (!def) return null;
 
   return {
-    emmet:        def.emmet,
+    layers:       def.layers,
     attr:         { ...def.attr, ...(block.style_overrides || {}) },
     _script_deps: def.script_deps || [],
   };
@@ -117,7 +117,7 @@ function tokenStyleTag(name, css) {
 
 // Builds the design/brand-token <style> tags for one render: __design_tokens first (layered,
 // base layout → page), __brand_tokens second so it always wins any overlapping custom property
-// regardless of which level declared it — see docs/WDL-Reference.md "Design tokens".
+// regardless of which level declared it — see docs/ruledwdl-reference.md "Design tokens".
 function buildTokenStyles(chain, pageData) {
   return [
     tokenStyleTag('design-tokens', collectCssTokens('__design_tokens', chain, pageData)),

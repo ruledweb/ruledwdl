@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// wdl render <project-dir> <slug>   → render one WDL page to HTML on stdout.
-// wdl serve  [project-dir] [port]   → live preview server: open pages in a browser (edit JSON, refresh).
+// ruledwdl render <project-dir> <slug>   → render one WDL page to HTML on stdout.
+// ruledwdl serve  [project-dir] [port]   → live preview server: open pages in a browser (edit JSON, refresh).
 // Proves the package drops into any project (no Cloudflare); also the harness for rendering.
 import { composePage } from '../src/index.js';
 import { createFileStore } from '../src/stores/file-store.js';
@@ -20,12 +20,12 @@ function listSlugs(dir) {
 }
 
 if (cmd === 'render') {
-  if (!a || !b) { console.error('usage: wdl render <project-dir> <slug>'); process.exit(1); }
+  if (!a || !b) { console.error('usage: ruledwdl render <project-dir> <slug>'); process.exit(1); }
   const store = createFileStore(a);
   const page = await store.getPage('cli', b);
   if (!page) { console.error(`page not found: ${b}`); process.exit(1); }
   const { html, dynamic } = await composePage(store, 'cli', page);
-  process.stderr.write(`[wdl] rendered ${b} (${html.length} bytes${dynamic ? ', dynamic' : ''})\n`);
+  process.stderr.write(`[ruledwdl] rendered ${b} (${html.length} bytes${dynamic ? ', dynamic' : ''})\n`);
   process.stdout.write(html);
 
 } else if (cmd === 'serve') {
@@ -51,11 +51,11 @@ if (cmd === 'render') {
     }
   });
   server.listen(port, () => {
-    console.error(`[wdl] serving "${dir}" at http://localhost:${port}`);
-    console.error(`[wdl] pages: ${listSlugs(dir).join('  ') || '(none)'}`);
+    console.error(`[ruledwdl] serving "${dir}" at http://localhost:${port}`);
+    console.error(`[ruledwdl] pages: ${listSlugs(dir).join('  ') || '(none)'}`);
   });
 
 } else {
-  console.error('usage:\n  wdl render <project-dir> <slug>\n  wdl serve  [project-dir] [port]');
+  console.error('usage:\n  ruledwdl render <project-dir> <slug>\n  ruledwdl serve  [project-dir] [port]');
   process.exit(1);
 }

@@ -17,7 +17,7 @@
 //
 // Design/brand tokens are NOT a store concept — they're authored directly in WDL JSON via the
 // reserved DATA.__design_tokens / DATA.__brand_tokens keys (layered across the layout chain + page,
-// see docs/WDL-Reference.md), so there is no getDesignTokens method here.
+// see docs/ruledwdl-reference.md), so there is no getDesignTokens method here.
 
 // In-memory store — pure (Workers-safe), handy for tests and embedding. Pass any subset of the keys.
 export function createMemoryStore(data = {}) {

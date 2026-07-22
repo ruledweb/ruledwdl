@@ -1,9 +1,9 @@
 # WDL Hypermedia Roadmap (planning — do NOT build yet)
 
 **Status:** PLANNING ONLY. This is a design doc to agree *before* any experimentation in the
-`@wdl/core` sandbox. Nothing here is implemented. Live projects are untouched and stay untouched.
+`@ruledweb/wdl` sandbox. Nothing here is implemented. Live projects are untouched and stay untouched.
 
-> Decision standing (2026-06-28): plan the WDL roadmap before experimenting; `@wdl/core` is an
+> Decision standing (2026-06-28): plan the WDL roadmap before experimenting; `@ruledweb/wdl` is an
 > isolated sandbox; never wire into a live/launching project until explicitly decided.
 
 ---

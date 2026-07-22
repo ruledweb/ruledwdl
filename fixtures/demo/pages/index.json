@@ -2,12 +2,19 @@
   "slug": "/",
   "title": "WDL Demo",
   "layout": "base",
-  "REGISTRY": {},
+  "REGISTRY": {
+    "card": { "class": "bg-white rounded-2xl shadow-xl p-10 max-w-md w-full text-center" },
+    "badge": { "class": "inline-block text-xs font-bold tracking-widest uppercase text-indigo-500 mb-4" },
+    "title": { "class": "text-4xl font-extrabold text-slate-900 mb-3" },
+    "subtitle": { "class": "text-slate-500 mb-7" },
+    "tags": { "class": "flex flex-wrap justify-center gap-2" },
+    "tag": { "class": "text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full border border-indigo-100" }
+  },
   "COMPONENTS": [
     {
-      "emmet": "div.card.bg-white.rounded-2xl.shadow-xl.p-10.max-w-md.w-full.text-center>div.badge.inline-block.text-xs.font-bold.tracking-widest.uppercase.text-indigo-500.mb-4+h1.title.text-4xl.font-extrabold.text-slate-900.mb-3+p.subtitle.text-slate-500.mb-7+div.tags.flex.flex-wrap.justify-center.gap-2>span.tag.text-xs.font-semibold.bg-indigo-50.text-indigo-700.px-3.py-1.rounded-full.border.border-indigo-100*tags",
+      "layers": "div.card>div.badge+h1.title+p.subtitle+div.tags>span.tag*tags",
       "attr": {
-        ".badge": { "text": "@wdl/core" },
+        ".badge": { "text": "@ruledwdl/core" },
         ".title": { "text": "Hello ${name} 👋" },
         ".subtitle": { "text": "This page was rendered from a folder of JSON — no Cloudflare, no database. Just the WDL runtime." },
         ".tag": { "text": "${label}" }

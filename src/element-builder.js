@@ -1,6 +1,6 @@
 // src/renderer/element-builder.js
 import { resolveAll, resolveStr, resolvePath } from './data-resolver.js';
-import { matchAttr } from './emmet-parser.js';
+import { matchAttr } from './layers-parser.js';
 import { renderInlineMarkdown } from './markdown.js';
 
 export function esc(str) {

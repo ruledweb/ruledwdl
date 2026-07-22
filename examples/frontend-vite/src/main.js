@@ -10,7 +10,7 @@ const store = createMemoryStore({
   layouts: {
     base: {
       name: 'base',
-      COMPONENTS: [{ emmet: 'div.wrap', attr: { '.wrap': { text: '{{content}}' } } }],
+      COMPONENTS: [{ layers: 'div.wrap', attr: { '.wrap': { text: '{{content}}' } } }],
       DATA: { __brand_tokens: ':root{--brand:#2563eb;}' },
     },
   },
@@ -24,7 +24,7 @@ const page = {
     cta:  { style: 'display:inline-block;background:var(--brand);color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;' },
   },
   COMPONENTS: [{
-    emmet: 'h2+p+a.cta',
+    layers: 'h2+p+a.cta',
     attr: {
       h2: { text: 'Rendered by @wdl/core, bundled by Vite' },
       p:  { text: 'This block is authored as WDL JSON, imported as a normal dependency.' },

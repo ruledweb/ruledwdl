@@ -63,7 +63,7 @@ with `DOMParser` and grafted directly into the host page's real `<body>`, so the
 markup is genuinely part of the visible page (inspectable in normal devtools, no frame boundary).
 It renders two **separate** WDL components — a nav bar with a hamburger button and a drawer panel
 — that share open/closed state only through a global `Alpine.store('ui', ...)`, the pattern
-documented under "Cross-component state" in `docs/WDL-Reference.md`.
+documented under "Cross-component state" in `docs/ruledwdl-reference.md`.
 
 **Two real gotchas this example had to solve** (both are properties of dynamically injecting HTML
 after page load, not of `@wdl/core` itself):

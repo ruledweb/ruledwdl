@@ -1,9 +1,11 @@
 {
   "name": "base",
-  "REGISTRY": {},
+  "REGISTRY": {
+    "shell": { "class": "min-h-screen bg-gradient-to-br from-slate-100 to-indigo-200 flex items-center justify-center p-6" }
+  },
   "COMPONENTS": [
     {
-      "emmet": "div.shell.min-h-screen.bg-gradient-to-br.from-slate-100.to-indigo-200.flex.items-center.justify-center.p-6",
+      "layers": "div.shell",
       "attr": { ".shell": { "text": "{{content}}" } }
     }
   ],

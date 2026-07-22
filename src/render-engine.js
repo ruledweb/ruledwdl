@@ -1,14 +1,14 @@
 // src/renderer/render-engine.js
-import { parseEmmet } from './emmet-parser.js';
+import { parseLayers } from './layers-parser.js';
 import { toHTML, esc } from './element-builder.js';
 
 export function renderAll(REG, COMPS, DAT) {
   return COMPS.map(comp => {
-    // Raw-HTML escape hatch: a resolved component may emit finished HTML instead of an emmet
+    // Raw-HTML escape hatch: a resolved component may emit finished HTML instead of a layers
     // string (e.g. a `resolveComponent` extension hook returning pre-rendered markup, like
-    // wdl-extensions/forms). Emitted verbatim; the producer is responsible for esc.
+    // forms). Emitted verbatim; the producer is responsible for esc.
     if (comp._raw_html != null) return comp._raw_html;
-    return parseEmmet(comp.emmet || 'div')
+    return parseLayers(comp.layers || 'div')
       .map(n => toHTML(n, comp.attr || {}, DAT, REG))
       .join('');
   }).join('');

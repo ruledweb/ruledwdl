@@ -24,7 +24,7 @@ const memStore = createMemoryStore({
   layouts: {
     base: {
       name: 'base',
-      COMPONENTS: [{ emmet: 'main.wrap', attr: { '.wrap': { text: '{{content}}' } } }],
+      COMPONENTS: [{ layers: 'main.wrap', attr: { '.wrap': { text: '{{content}}' } } }],
       DATA: { __design_tokens: ':root{--accent:#059669;}' },
     },
   },
@@ -33,7 +33,7 @@ const page = {
   title: 'Node ESM example',
   layout: 'base',
   REGISTRY: { h1: { style: 'color:var(--accent);font-family:system-ui;' } },
-  COMPONENTS: [{ emmet: 'h1', attr: { h1: { text: 'Hello ${name} from Node' } } }],
+  COMPONENTS: [{ layers: 'h1', attr: { h1: { text: 'Hello ${name} from Node' } } }],
   DATA: { name: 'World' },
 };
 const { html: memHtml } = await composePage(memStore, 'demo', page);

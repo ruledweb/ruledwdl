@@ -45,7 +45,7 @@
         base: {
           name: 'base',
           COMPONENTS: [{
-            emmet: 'div.shell',
+            layers: 'div.shell',
             attr: { '.shell': { text: '{{content}}' } },
           }],
           DATA: {
@@ -55,7 +55,7 @@
       },
       components: {
         badge: {
-          emmet: 'span.badge',
+          layers: 'span.badge',
           attr: { '.badge': { text: '${label}' } },
         },
       },
@@ -71,7 +71,7 @@
       },
       COMPONENTS: [
         { component: 'badge', data_overrides: { label: '@wdl/core' } },
-        { emmet: 'div.card>h1+p', attr: {
+        { layers: 'div.card>h1+p', attr: {
           h1: { text: 'Hello ${name} 👋' },
           p:  { text: 'This ran with **zero build step** — plain ES modules in the browser.' },
         } },
