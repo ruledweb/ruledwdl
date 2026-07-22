@@ -1,6 +1,6 @@
 {
   "name": "@ruledwdl/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Web Definition Language (WDL) core runtime and component layout engine.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -43,7 +43,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RuledSEO/ruledwdl.git"
+    "url": "git+https://github.com/ruledweb/ruledwdl.git"
+  },
+  "homepage": "https://github.com/ruledweb/ruledwdl#readme",
+  "bugs": {
+    "url": "https://github.com/ruledweb/ruledwdl/issues"
   },
   "dependencies": {
     "marked": "^12.0.2"
