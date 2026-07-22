@@ -1,6 +1,6 @@
 {
   "name": "@ruledwdl/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Web Definition Language (WDL) core runtime and component layout engine.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
