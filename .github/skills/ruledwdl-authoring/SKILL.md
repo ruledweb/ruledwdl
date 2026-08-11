@@ -102,18 +102,34 @@ The `layers` string defines the DOM hierarchy using a compact selector syntax.
 - **Automatic Attributes**:
   - Every rendered element automatically receives `wdl-comp="{semantic-id}"` (`{semantic-id}` is the class name or tag fallback, overrideable in `attr`).
 
-### Scoping Examples
+### Scoping & Authoring Format Examples
+
+#### Format 1: Single String Expression
 ```
 header>div.container>h1.title+p.sub<div.banner
 ```
-- `header` contains `div.container`.
-- `div.container` contains `h1.title` and sibling `p.sub`.
-- `<` climbs back to `header`, placing `div.banner` as a sibling of `div.container` inside `header`.
 
+#### Format 2: Flat String Array (Clean, Zero Indent Whitespace Burden)
+```json
+"layers": [
+  "header",
+  "> div.container",
+  "> h1.title",
+  "+ p.sub",
+  "< div.banner"
+]
 ```
-div.shell>main>article>h1.title<<footer.site_footer
+
+#### Format 3: 5-Element Tuple Array (`[depth, operator, tag, semantic_id, repeator]`)
+```json
+"layers": [
+  [0, "",  "header", "site_header", null],
+  [1, ">", "div",    "container",   null],
+  [2, ">", "h1",     "title",       null],
+  [2, "+", "p",      "sub",         null],
+  [1, "<", "div",    "banner",      null]
+]
 ```
-- `<<` climbs up 2 levels (`article` -> `main` -> `div.shell`), placing `footer.site_footer` as a sibling of `main` directly under `div.shell`.
 
 ### Strict Negative Constraints (Will Throw Parse Errors)
 - **NO Multiple Classes**: Strictly max 1 `semantic_id` per node (`.class1.class2` is FORBIDDEN). Place additional CSS classes in `REGISTRY` or `attr[".semantic_id"].class`.
