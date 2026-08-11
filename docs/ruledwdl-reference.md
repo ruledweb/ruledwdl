@@ -2,9 +2,9 @@
 
 Starting with WDL Core v0.2.0, the three core primitives are independently versioned and specified:
 
-* **[`specifications/registry.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry.md)** — `REGISTRY` Specification (`v2.0`)
-* **[`specifications/component.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component.md)** — `COMPONENTS` Specification (`v2.0`)
-* **[`specifications/data.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data.md)** — `DATA` Specification (`v2.0`)
+* **[`specifications/registry/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md)** — `REGISTRY` Specification (`v2.0`)
+* **[`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md)** — `COMPONENTS` Specification (`v2.0`)
+* **[`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)** — `DATA` Specification (`v2.0`)
 * **[`specifications/v.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/v.md)** — Specification Version Logs
 
 > **Backward Compatibility & Version Maintenance Notice**:  

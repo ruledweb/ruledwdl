@@ -38,9 +38,9 @@ A complete RuledWDL page is a single JSON object with three primary sections: `R
 }
 ```
 
-- **`REGISTRY`** ([`specifications/registry.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry.md)): Map of component tokens, base attributes, and `script_deps` (v2.0).
-- **`COMPONENTS`** ([`specifications/component.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component.md)): Ordered array of visual layer definitions or component references (v2.0).
-- **`DATA`** ([`specifications/data.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data.md)): State object containing dynamic variables, loop arrays, head elements, and CSS design tokens (v2.0).
+- **`REGISTRY`** ([`specifications/registry/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md)): Map of component tokens, base attributes, `__tokens__`, and `script_deps` (v2.0).
+- **`COMPONENTS`** ([`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md)): Ordered array of visual layer definitions or component references (v2.0).
+- **`DATA`** ([`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)): State object containing dynamic variables, loop arrays, head elements, and CSS design tokens (v2.0).
 - **`layout`** *(optional)*: Name of the layout wrapper to extend.
 - **`fullPage`** *(optional)*: Boolean. Set `true` only if the layout outputs a complete `<html>` document. If `false` (default), the renderer automatically wraps output with UTF-8, viewport, title, and Tailwind CSS.
 
