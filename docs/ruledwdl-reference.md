@@ -1,10 +1,14 @@
-# RuledWDL Reference — @ruledwdl/core
+## Independent WDL Specification Modules (v2.0)
 
-A WDL page is a JSON object with three keys: REGISTRY, COMPONENTS, DATA.
-`src/` is the host-agnostic renderer: it turns that JSON into HTML given an
-injected `store` (see `src/store.js`) — no D1/KV/env imports, and no
-built-in knowledge of forms, email, SQL queries, plugins, or content
-schemas. This document covers only what `src/` itself implements.
+Starting with WDL Core v0.2.0, the three core primitives are independently versioned and specified:
+
+* **[`specifications/registry.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry.md)** — `REGISTRY` Specification (`v2.0`)
+* **[`specifications/component.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component.md)** — `COMPONENTS` Specification (`v2.0`)
+* **[`specifications/data.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data.md)** — `DATA` Specification (`v2.0`)
+* **[`specifications/v.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/v.md)** — Specification Version Logs
+
+> **Backward Compatibility & Version Maintenance Notice**:  
+> All applications, headless CMS backends, page generation systems, and parsers developed for WDL Core **prior to version 0.2.0** MUST explicitly maintain and specify schema versions (`$version`) at their end to ensure proper backwards compatibility routing when interacting with v0.2.0+ engines.
 
 ## COMPONENTS — structure
 

@@ -15,25 +15,37 @@ For comprehensive examples and anti-patterns to prevent model hallucinations, in
 
 ---
 
-## 1. Top-Level Page Schema
+## 1. Top-Level Page & Sub-schema Specifications (v2.0)
 
-A complete RuledWDL page is a single JSON object with three primary sections: `REGISTRY`, `COMPONENTS`, and `DATA`.
+A complete RuledWDL page is a single JSON object with three primary sections: `REGISTRY`, `COMPONENTS`, and `DATA`. Each section follows an independent specification versioned at **`2.0`** (see [`specifications/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/README.md)).
 
 ```json
 {
   "layout": "default",
   "fullPage": false,
-  "REGISTRY": {},
-  "COMPONENTS": [],
-  "DATA": {}
+  "REGISTRY": {
+    "$version": "2.0"
+  },
+  "COMPONENTS": [
+    {
+      "$version": "2.0",
+      "layers": "section.hero>h1.title"
+    }
+  ],
+  "DATA": {
+    "$version": "2.0"
+  }
 }
 ```
 
-- **`REGISTRY`**: Map of class-name style tokens and base attributes.
-- **`COMPONENTS`**: Ordered array of visual layer definitions or component references.
-- **`DATA`**: State object containing dynamic variables, loop arrays, SEO, head elements, and CSS design tokens.
+- **`REGISTRY`** ([`specifications/registry.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry.md)): Map of component tokens, base attributes, and `script_deps` (v2.0).
+- **`COMPONENTS`** ([`specifications/component.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component.md)): Ordered array of visual layer definitions or component references (v2.0).
+- **`DATA`** ([`specifications/data.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data.md)): State object containing dynamic variables, loop arrays, head elements, and CSS design tokens (v2.0).
 - **`layout`** *(optional)*: Name of the layout wrapper to extend.
 - **`fullPage`** *(optional)*: Boolean. Set `true` only if the layout outputs a complete `<html>` document. If `false` (default), the renderer automatically wraps output with UTF-8, viewport, title, and Tailwind CSS.
+
+> **Pre-v0.2.0 Compatibility Notice**:  
+> Applications, page authors, and CMS backends targeting WDL core versions prior to 0.2.0 MUST explicitly specify/maintain schema versions at their end to ensure backward compatibility routing.
 
 ---
 

@@ -77,7 +77,7 @@ if (errors.length > 0) {
 // 2. Check REGISTRY Keys
 if (wdl.REGISTRY) {
   for (const key of Object.keys(wdl.REGISTRY)) {
-    if (key.includes('.')) {
+    if (key !== '$version' && key.includes('.')) {
       errors.push(`REGISTRY key "${key}" contains a dot. Keys must be bare class names (e.g. "hero-card", NOT "div.hero-card").`);
     }
   }
