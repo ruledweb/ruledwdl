@@ -1,4 +1,4 @@
-import { composePage, renderAll, createMemoryStore, parseLayers, resolveSchemaVersions } from '../src/index.js';
+import { composePage, renderAll, createMemoryStore, parseLayers, resolveSchemaVersions, WDLDomTree } from '../src/index.js';
 import { createFileStore } from '../src/stores/file-store.js';
 import { marked } from 'marked';
 import { fileURLToPath } from 'node:url';
@@ -269,6 +269,53 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
 
   ok('transformText passes element node allowing selective external parser plugging (e.g. marked)',
     htmlHook.includes('Hello <strong>World</strong>')
+  );
+}
+
+// 11) WDLDomTree State Machine & 5-element tuple validation
+{
+  const tree = WDLDomTree.from([
+    [0, '', 'form', 'login', null],
+    [1, '>', 'div', 'container', null],
+    [2, '>', 'h2', 'title', null],
+    [2, '+', 'input', 'email', null],
+    [1, '<@1', 'a', 'forgot', null]
+  ]);
+
+  ok('WDLDomTree ingests 5-element tuple array state', tree.length === 5);
+  ok('WDLDomTree.toString converts tuples to WDL layers string',
+    tree.toString() === 'form.login > div.container > h2.title + input.email <@1 a.forgot'
+  );
+
+  // Test wrapping mutation
+  tree.wrap(2, 'div', 'title_wrap');
+  ok('WDLDomTree.wrap inserts wrapper node and indents target node',
+    tree.toString().includes('div.title_wrap > h2.title')
+  );
+
+  // Test operator validation error
+  let opErr = false;
+  try {
+    WDLDomTree.from([[0, 'INVALID_OP', 'div', 'card']]);
+  } catch (err) {
+    opErr = err.message.includes('Invalid operator "INVALID_OP"');
+  }
+  ok('WDLDomTree enforces allowed WDL operators', opErr);
+
+  // Test single semantic ID restriction error
+  let semErr = false;
+  try {
+    WDLDomTree.from([[0, '', 'div', 'card1.card2']]);
+  } catch (err) {
+    semErr = err.message.includes('Multiple dot selectors in "card1.card2" are not allowed');
+  }
+  ok('WDLDomTree enforces single semantic_id per node', semErr);
+
+  // Test renderAll with WDLDomTree instance directly
+  const htmlTree = renderAll({}, [{ layers: tree }], {});
+  ok('renderAll renders WDLDomTree instances directly',
+    htmlTree.includes('wdl-comp="login"') &&
+    htmlTree.includes('wdl-comp="title_wrap"')
   );
 }
 

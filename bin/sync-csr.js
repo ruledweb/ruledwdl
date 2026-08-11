@@ -65,6 +65,14 @@ writeFileSync(
 );
 console.log('  ✓ Synced element-builder.js');
 
+// 6. Copy wdl-dom-tree.js directly (100% identical)
+const wdlDomTreeContent = readFileSync(resolve(coreSrcDir, 'wdl-dom-tree.js'), 'utf-8');
+writeFileSync(
+  resolve(csrSrcDir, 'wdl-dom-tree.js'),
+  `// src/wdl-dom-tree.js — Synced from @ruledwdl/core\n${wdlDomTreeContent}`
+);
+console.log('  ✓ Synced wdl-dom-tree.js');
+
 // 4. Rebuild wdl-csr bundle
 try {
   console.log('📦 Rebuilding @ruledwdl/csr bundle...');
