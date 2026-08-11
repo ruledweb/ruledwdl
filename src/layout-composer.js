@@ -7,6 +7,7 @@
 import { renderAll, wrapPage } from './render-engine.js';
 import { resolvePath } from './data-resolver.js';
 import { resolveSchemaVersions } from './schema-version.js';
+import { normalizeRegistry, compileGlobalTokens } from './registry-compiler.js';
 
 const SLOT = '{{content}}';
 
@@ -119,8 +120,9 @@ function tokenStyleTag(name, css) {
 // Builds the design/brand-token <style> tags for one render: __design_tokens first (layered,
 // base layout → page), __brand_tokens second so it always wins any overlapping custom property
 // regardless of which level declared it — see docs/ruledwdl-reference.md "Design tokens".
-function buildTokenStyles(chain, pageData) {
+function buildTokenStyles(chain, pageData, themeCss = '') {
   return [
+    tokenStyleTag('theme-tokens', themeCss),
     tokenStyleTag('design-tokens', collectCssTokens('__design_tokens', chain, pageData)),
     tokenStyleTag('brand-tokens', collectCssTokens('__brand_tokens', chain, pageData)),
   ].filter(Boolean);
@@ -185,25 +187,27 @@ export async function composePage(store, project, page, { cssDelivery, headInjec
   const ret = (html) => ({ html, dynamic: hasDynamicComponents, versions });
   const inject = [].concat(headInject || []).filter(Boolean);
 
-  if (!chain.length) {
-    const head0 = [...buildTokenStyles([], mergedPageData), ...[].concat(mergedPageData.__head || []), ...inject].filter(Boolean);
-    return ret(wrapPage(renderAll(mergedReg, resolvedCOMPS, mergedPageData), page.title, scriptBuckets, seo, css, head0));
-  }
-
   const mergedData = Object.assign({}, ...chain.map(l => l.DATA || {}), mergedPageData);
   mergedReg = Object.assign({}, mergedReg, ...chain.map(l => l.REGISTRY || {}), pageREG);
 
-  let html = renderAll(mergedReg, resolvedCOMPS, mergedData);
+  const { normalizedRegistry, themeCss } = normalizeRegistry(mergedReg);
+
+  if (!chain.length) {
+    const head0 = [...buildTokenStyles([], mergedPageData, themeCss), ...[].concat(mergedPageData.__head || []), ...inject].filter(Boolean);
+    return ret(wrapPage(renderAll(normalizedRegistry, resolvedCOMPS, mergedPageData), page.title, scriptBuckets, seo, css, head0));
+  }
+
+  let html = renderAll(normalizedRegistry, resolvedCOMPS, mergedData);
 
   for (let i = chain.length - 1; i >= 0; i--) {
-    const layerReg = Object.assign({}, ...chain.slice(0, i + 1).map(l => l.REGISTRY || {}), mergedReg);
+    const layerReg = Object.assign({}, ...chain.slice(0, i + 1).map(l => l.REGISTRY || {}), normalizedRegistry);
     const layoutHTML = renderAll(layerReg, resolvedLayerCOMPS[i], mergedData);
     html = layoutHTML.includes(SLOT) ? layoutHTML.replace(SLOT, html) : layoutHTML + html;
   }
 
   if (chain[0]?.fullPage === true) return ret(html || '<!DOCTYPE html><html><body></body></html>');
   const headExtra = [
-    ...buildTokenStyles(chain, mergedPageData),
+    ...buildTokenStyles(chain, mergedPageData, themeCss),
     ...chain.flatMap(l => [].concat(l.DATA?.__head || [])),
     ...[].concat(mergedPageData.__head || []),
     ...inject,

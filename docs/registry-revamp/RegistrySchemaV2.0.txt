@@ -1,0 +1,58 @@
+# Registry Schema
+
+```json
+{
+  "REGISTRY": {
+    "__tokens__": {
+      "vars": {
+        "color-primary": "#4f46e5",
+        "color-primary-hover": "#4338ca",
+        "radius-card": "0.75rem",
+        "spacing-card": "1.5rem"
+      }
+    },
+    "<token-id>": {
+      "vars": {
+        "<scoped-var>": "${user-var}"
+      },
+      "uses": [
+        "<inherited-token-id>"
+      ],
+      "base": "<utility-classes-using-prefix-$_{scoped-var}>",
+      "variants": {
+        "<variant-name>": "<utility-classes-using-prefix-$_{scoped-var}>"
+      },
+      "defaultVariant": "<variant-name>",
+      "states": {
+        "<pseudo-or-context>": "<utility-classes-using-prefix-$_{scoped-var}>"
+      },
+      "breakpoints": {
+        "<screen-size>": "<utility-classes-using-prefix-$_{scoped-var}>"
+      },
+      "containers": {
+        "@<container-size>": "<utility-classes-using-prefix-$_{scoped-var}>"
+      },
+      "scopes": {
+        "<child-selector>": "<utility-classes-using-prefix-$_{scoped-var}>"
+      }
+    }
+  }
+}
+
+```
+
+### Key Definitions
+
+* **`prefix-$_{scoped-var}`**: Unbracketed component variable shorthand (e.g., `p-$_{pad}`, `bg-$_{bg}`, `rounded-$_{radius}`). The compiler auto-expands this to `p-[var(--<user-token>)]` or `p-[<raw-value>]`.
+* **`${user-var}`**: Global user design token reference pointing to keys in `REGISTRY.__tokens__.vars` (e.g., `"pad": "${spacing-card}"`).
+* **`$_{scoped-var}`**: Component-scoped variable alias defined inside the component's own `vars` map.
+* **`__tokens__.vars`** (`Record<string, string>`): Global user token dictionary rendered as CSS custom properties (`:root` / `@theme`)[cite: 1, 2].
+* **Component `vars**` (`Record<string, string>`): Local component variable alias dictionary mapping local names to global user tokens (`"${user-var}"`).
+* **`uses`** (`string[]`): Token inheritance array. Pre-evaluates parent utilities and variable aliases, merging local `vars` on collision.
+* **`base`** (`string`): Core baseline utilities using concise variable syntax (e.g., `"p-$_{pad} bg-$_{bg}"`).
+* **`variants`** (`Record<string, string>`): Conditional variation dictionary using `prefix-$_{scoped-var}` placeholders.
+* **`defaultVariant`** (`string`): Fallback variant identifier.
+* **`states`** (`Record<string, string>`): Pseudo-classes and context flags (e.g., `"hover": "bg-$_{bg-hover}"`).
+* **`breakpoints`** (`Record<string, string>`): Media query threshold dictionary using `prefix-$_{scoped-var}`.
+* **`containers`** (`Record<string, string>`): Container query threshold dictionary using `prefix-$_{scoped-var}`.
+* **`scopes`** (`Record<string, string>`): Child selector overrides (`& .child`) using `prefix-$_{scoped-var}`.

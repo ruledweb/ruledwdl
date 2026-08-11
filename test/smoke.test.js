@@ -175,5 +175,64 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   );
 }
 
+// 9) Registry Schema V2.0 (__tokens__, uses inheritance, prefix-$_{scoped-var}, variants, states)
+{
+  const storeV2 = createMemoryStore({});
+  const pageV2 = {
+    schema_version: '0.2.0',
+    REGISTRY: {
+      $version: '2.0',
+      __tokens__: {
+        vars: {
+          'spacing-card': '1.5rem',
+          'color-primary': '#4f46e5'
+        }
+      },
+      'card-base': {
+        vars: {
+          pad: '${spacing-card}'
+        },
+        base: 'p-$_{pad} rounded-lg'
+      },
+      'hero-card': {
+        uses: ['card-base'],
+        vars: {
+          bg: '#ffffff'
+        },
+        base: 'bg-$_{bg} shadow-md',
+        variants: {
+          elevated: 'border border-gray-200'
+        },
+        defaultVariant: 'elevated',
+        states: {
+          hover: 'bg-$_{color-primary}'
+        },
+        breakpoints: {
+          md: 'p-8'
+        }
+      }
+    },
+    COMPONENTS: [
+      { layers: 'div.hero-card>h1.title', attr: { '.title': { text: 'V2 Card' } } }
+    ]
+  };
+
+  const { html } = await composePage(storeV2, 'demo', pageV2);
+
+  ok('compiles REGISTRY.__tokens__.vars into <style data-wdl="theme-tokens">',
+    html.includes('<style data-wdl="theme-tokens">') &&
+    html.includes('--spacing-card: 1.5rem;') &&
+    html.includes('--color-primary: #4f46e5;')
+  );
+
+  ok('expands uses inheritance, prefix-$_{scoped-var}, variants, states, and breakpoints into class attribute',
+    html.includes('p-[var(--spacing-card)]') &&
+    html.includes('bg-[#ffffff]') &&
+    html.includes('border border-gray-200') &&
+    html.includes('hover:bg-[var(--color-primary)]') &&
+    html.includes('md:p-8')
+  );
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

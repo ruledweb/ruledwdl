@@ -41,6 +41,22 @@ writeFileSync(
 );
 console.log('  ✓ Synced data-resolver.js');
 
+// 3. Copy token-expander.js directly (100% identical)
+const tokenExpanderContent = readFileSync(resolve(coreSrcDir, 'token-expander.js'), 'utf-8');
+writeFileSync(
+  resolve(csrSrcDir, 'token-expander.js'),
+  `// src/token-expander.js — Synced from @ruledwdl/core\n${tokenExpanderContent}`
+);
+console.log('  ✓ Synced token-expander.js');
+
+// 4. Copy registry-compiler.js directly (100% identical)
+const registryCompilerContent = readFileSync(resolve(coreSrcDir, 'registry-compiler.js'), 'utf-8');
+writeFileSync(
+  resolve(csrSrcDir, 'registry-compiler.js'),
+  `// src/registry-compiler.js — Synced from @ruledwdl/core\n${registryCompilerContent}`
+);
+console.log('  ✓ Synced registry-compiler.js');
+
 // 3. Adapt element-builder.js for CSR (strip markdown import, use raw string passthrough)
 let elBuilderContent = readFileSync(resolve(coreSrcDir, 'element-builder.js'), 'utf-8');
 elBuilderContent = elBuilderContent
