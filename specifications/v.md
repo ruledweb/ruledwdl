@@ -6,6 +6,19 @@ This log tracks all version changes, specification releases, and schema updates 
 
 ## 📜 Specification Version History
 
+### Version 0.3.0 Release (Released: 2026-08-12 — WDL Core v0.3.0)
+
+> **Status**: Current Engine Release  
+> **Target Engine**: `@ruledwdl/core@^0.3.0`, `@ruledwdl/csr@^0.3.0`
+
+* **100% Zero-Dependency Core Engine**:
+  * Removed internal `marked` dependency. Bundle size dropped from **96 kB $\rightarrow$ ~13.5 kB** (**~71% size reduction**).
+* **Pluggable Transformation Pipeline Hooks**:
+  * Added Stage-1 state pre-processing hook: `opts.transformData(data)`.
+  * Added Stage-2 element text hook: `opts.transformText(text, node)`. Enables external Markdown (`marked`, `markdown-it`), MDX, shortcode, or i18n parser plugging.
+
+---
+
 ### Version 2.0 (Released: 2026-08-12 — WDL Core v0.2.0)
 
 > **Status**: Current Active Standard  

@@ -1,5 +1,6 @@
 import { composePage, renderAll, createMemoryStore, parseLayers, resolveSchemaVersions } from '../src/index.js';
 import { createFileStore } from '../src/stores/file-store.js';
+import { marked } from 'marked';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -231,6 +232,43 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
     html.includes('border border-gray-200') &&
     html.includes('hover:bg-[var(--color-primary)]') &&
     html.includes('md:p-8')
+  );
+}
+
+// 10) Pluggable Transformation Hooks (transformData & transformText)
+{
+  const storeHook = createMemoryStore({});
+  const pageHook = {
+    schema_version: '0.3.0',
+    COMPONENTS: [
+      { layers: 'h1.title+p.md-text', attr: { '.title': { text: '${heading}' }, '.md-text': { text: 'Hello **World**' } } }
+    ],
+    DATA: {
+      heading: '  Raw Title  '
+    }
+  };
+
+  const { html: htmlHook } = await composePage(storeHook, 'demo', pageHook, {
+    // Stage 1: Data pre-processing hook
+    transformData: (data) => {
+      data.heading = data.heading.trim().toUpperCase();
+      return data;
+    },
+    // Stage 2: Selective element-level text hook (plugging marked externally)
+    transformText: (text, node) => {
+      if (node.classes.includes('md-text')) {
+        return marked.parseInline(text);
+      }
+      return text;
+    }
+  });
+
+  ok('transformData pre-processes state variables before composition',
+    htmlHook.includes('RAW TITLE')
+  );
+
+  ok('transformText passes element node allowing selective external parser plugging (e.g. marked)',
+    htmlHook.includes('Hello <strong>World</strong>')
   );
 }
 

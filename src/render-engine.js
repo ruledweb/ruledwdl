@@ -2,14 +2,14 @@
 import { parseLayers } from './layers-parser.js';
 import { toHTML, esc } from './element-builder.js';
 
-export function renderAll(REG, COMPS, DAT) {
+export function renderAll(REG, COMPS, DAT, opts = {}) {
   return COMPS.map(comp => {
     // Raw-HTML escape hatch: a resolved component may emit finished HTML instead of a layers
     // string (e.g. a `resolveComponent` extension hook returning pre-rendered markup, like
     // forms). Emitted verbatim; the producer is responsible for esc.
     if (comp._raw_html != null) return comp._raw_html;
     return parseLayers(comp.layers || 'div')
-      .map(n => toHTML(n, comp.attr || {}, DAT, REG))
+      .map(n => toHTML(n, comp.attr || {}, DAT, REG, opts))
       .join('');
   }).join('');
 }

@@ -7,8 +7,29 @@ Starting with WDL Core v0.2.0, the three core primitives are independently versi
 * **[`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)** — `DATA` Specification (`v2.0`)
 * **[`specifications/v.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/v.md)** — Specification Version Logs
 
-> **Backward Compatibility & Version Maintenance Notice**:  
-> All applications, headless CMS backends, page generation systems, and parsers developed for WDL Core **prior to version 0.2.0** MUST explicitly maintain and specify schema versions (`$version`) at their end to ensure proper backwards compatibility routing when interacting with v0.2.0+ engines.
+## Pluggable Transformation Pipeline Hooks (v0.3.0)
+
+Starting with `@ruledwdl/core@0.3.0`, the core engine is **100% zero-dependency**. All internal Markdown parsing has been removed, and developers can plug in external Markdown engines (`marked`, `markdown-it`, `remark`), MDX transformers, shortcodes, or i18n translation pipelines via two optional composition hooks:
+
+* **`opts.transformData(data)`**: Stage-1 page state hook. Invoked once on the merged `DATA` object before composition begins.
+* **`opts.transformText(text, node)`**: Stage-2 element text hook. Invoked per text node during HTML element building. Receives the element's AST node (`(text, node)`), allowing targeted external parser execution (e.g. based on `node.classes`).
+
+```javascript
+const { html } = await composePage(store, project, page, {
+  // Stage 1: Pre-process DATA state fields
+  transformData: (data) => {
+    data.title = data.title.trim();
+    return data;
+  },
+  // Stage 2: Selective text transformation (plugging marked externally)
+  transformText: (text, node) => {
+    if (node.classes.includes('md-body')) {
+      return marked.parseInline(text);
+    }
+    return text;
+  }
+});
+```
 
 ## COMPONENTS — structure
 

@@ -57,20 +57,13 @@ writeFileSync(
 );
 console.log('  ✓ Synced registry-compiler.js');
 
-// 3. Adapt element-builder.js for CSR (strip markdown import, use raw string passthrough)
-let elBuilderContent = readFileSync(resolve(coreSrcDir, 'element-builder.js'), 'utf-8');
-elBuilderContent = elBuilderContent
-  .replace("import { renderInlineMarkdown } from './markdown.js';\n", '')
-  .replace(
-    "const txt = res.text\n    ? (RAW_TEXT.has(node.tag) ? String(res.text) : renderInlineMarkdown(res.text))\n    : '';",
-    "// Raw text passthrough for CSR (no markdown dependency)\n  const txt = res.text ? String(res.text) : '';"
-  );
-
+// 5. Copy element-builder.js directly (100% identical)
+const elBuilderContent = readFileSync(resolve(coreSrcDir, 'element-builder.js'), 'utf-8');
 writeFileSync(
   resolve(csrSrcDir, 'element-builder.js'),
   `// src/element-builder.js — Synced from @ruledwdl/core\n${elBuilderContent}`
 );
-console.log('  ✓ Synced element-builder.js (CSR adapted)');
+console.log('  ✓ Synced element-builder.js');
 
 // 4. Rebuild wdl-csr bundle
 try {

@@ -13,7 +13,6 @@ export {
   composePage, resolveLayoutChain, loadDesignContext, resolveComponent,
   resolveScriptDef, collectAndDedupScripts,
 } from './layout-composer.js';
-export { renderInlineMarkdown } from './markdown.js';
 export { createMemoryStore } from './store.js';
 export { resolveSchemaVersions } from './schema-version.js';
 export { expandScopedVars } from './token-expander.js';

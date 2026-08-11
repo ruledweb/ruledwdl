@@ -141,7 +141,7 @@ function buildTokenStyles(chain, pageData, themeCss = '') {
 //                          core knowing about any of them.
 //   opts.extraScripts    — array (or async fn(pageDATA) => array) of extra script defs, e.g. from
 //                          the plugins extension's manifest scripts.
-export async function composePage(store, project, page, { cssDelivery, headInject, resolveComponent: resolveComponentOverride, extraScripts } = {}) {
+export async function composePage(store, project, page, { cssDelivery, headInject, resolveComponent: resolveComponentOverride, extraScripts, transformData, transformText } = {}) {
   const pageREG   = page.REGISTRY   || {};
   const pageCOMPS = page.COMPONENTS || [];
   const pageDATA  = page.DATA       || {};
@@ -187,21 +187,26 @@ export async function composePage(store, project, page, { cssDelivery, headInjec
   const ret = (html) => ({ html, dynamic: hasDynamicComponents, versions });
   const inject = [].concat(headInject || []).filter(Boolean);
 
-  const mergedData = Object.assign({}, ...chain.map(l => l.DATA || {}), mergedPageData);
+  let mergedData = Object.assign({}, ...chain.map(l => l.DATA || {}), mergedPageData);
+  if (typeof transformData === 'function') {
+    mergedData = (await transformData(mergedData)) || mergedData;
+  }
+
   mergedReg = Object.assign({}, mergedReg, ...chain.map(l => l.REGISTRY || {}), pageREG);
 
   const { normalizedRegistry, themeCss } = normalizeRegistry(mergedReg);
+  const renderOpts = { transformText };
 
   if (!chain.length) {
-    const head0 = [...buildTokenStyles([], mergedPageData, themeCss), ...[].concat(mergedPageData.__head || []), ...inject].filter(Boolean);
-    return ret(wrapPage(renderAll(normalizedRegistry, resolvedCOMPS, mergedPageData), page.title, scriptBuckets, seo, css, head0));
+    const head0 = [...buildTokenStyles([], mergedData, themeCss), ...[].concat(mergedData.__head || []), ...inject].filter(Boolean);
+    return ret(wrapPage(renderAll(normalizedRegistry, resolvedCOMPS, mergedData, renderOpts), page.title, scriptBuckets, seo, css, head0));
   }
 
-  let html = renderAll(normalizedRegistry, resolvedCOMPS, mergedData);
+  let html = renderAll(normalizedRegistry, resolvedCOMPS, mergedData, renderOpts);
 
   for (let i = chain.length - 1; i >= 0; i--) {
     const layerReg = Object.assign({}, ...chain.slice(0, i + 1).map(l => l.REGISTRY || {}), normalizedRegistry);
-    const layoutHTML = renderAll(layerReg, resolvedLayerCOMPS[i], mergedData);
+    const layoutHTML = renderAll(layerReg, resolvedLayerCOMPS[i], mergedData, renderOpts);
     html = layoutHTML.includes(SLOT) ? layoutHTML.replace(SLOT, html) : layoutHTML + html;
   }
 
