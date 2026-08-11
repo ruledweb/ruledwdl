@@ -82,9 +82,13 @@ The `layers` string defines the DOM hierarchy using a compact selector syntax.
 - **Operators**:
   - `>` : Descend to child scope (`>` binds tighter than `+`).
   - `+` : Add sibling at current scope level.
-  - `<` : De-indent / climb up one parent scope level (`<<` climbs 2 levels).
+  - `<` : De-indent 1 parent scope level (`<<` climbs 2 levels).
+  - `<*N` : De-indent repeater ($N$ levels, e.g. `<*3` $\equiv$ `<<<`).
+  - `<@N` : De-indent to absolute depth level $N$ (where depth 0 = root layer elements).
   - `*N` : Static numeric multiplier (`li.item*3`).
   - `*key` or `*key.path` : Data array loop (`li.post_item*posts`).
+- **Automatic Attributes**:
+  - Every rendered element automatically receives `wdl-comp="{semantic-id}"` (`{semantic-id}` is the class name or tag fallback, overrideable in `attr`).
 
 ### Scoping Examples
 ```

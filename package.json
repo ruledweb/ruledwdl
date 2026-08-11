@@ -1,6 +1,6 @@
 {
   "name": "@ruledwdl/core",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Web Definition Language (WDL) core runtime and component layout engine.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "esbuild src/index.js --bundle --format=iife --global-name=WDL --outfile=dist/ruledwdl.js && esbuild src/index.js --bundle --format=iife --global-name=WDL --minify --outfile=dist/ruledwdl.min.js && esbuild src/index.js --bundle --format=esm --outfile=dist/ruledwdl.esm.js",
+    "sync:csr": "node bin/sync-csr.js",
     "test": "node test/smoke.test.js"
   },
   "keywords": [

@@ -25,6 +25,12 @@ export function buildEl(node, attr, data, registry) {
   }
   const SKIP = new Set(['alpine', 'htmx', 'attr-ref', 'text', 'class']);
   const flat = { ...res, ...(res.alpine || {}), ...(res.htmx || {}) };
+  if (!flat['wdl-comp']) {
+    flat['wdl-comp'] = node.classes[0] || node.tag;
+  }
+  if (data && data._index !== undefined && flat['data-wdl-index'] === undefined) {
+    flat['data-wdl-index'] = String(data._index);
+  }
   const allCls = [
     ...(base.class || '').split(' '),
     ...(flat.class || '').split(' '),

@@ -36,7 +36,9 @@ Supported:
   default tag  .foo → div.foo
   child        >   (descend one level)
   sibling      +   (sibling at current level)
-  de-indent    <   (climb up one parent scope / subset level; << climbs 2 levels, etc.)
+  de-indent    <   (climb up one parent scope; << climbs 2 levels)
+  de-indent *  <*N (repeater: de-indents N levels, e.g. <*3 === <<<)
+  de-indent @  <@N (depth reference: de-indents to absolute depth level N; root elements = depth 0)
   numeric *N   li*3
   data loop    li*items  or  li*items.posts (renders one per DATA array entry)
 
@@ -45,6 +47,14 @@ Precedence & Scoping:
 - Use `<` to de-indent / climb back up to parent scope.
   Example: `header>div.container>h1+p<div.banner` renders `header` containing `div.container` (with `h1` and `p`), followed by sibling `div.banner` directly inside `header`.
   Example: `div.shell>main>article>h1<<footer` renders `footer` as a sibling of `main` under `div.shell`.
+  Example: `div.row>div.col>article>p<@0section.footer` de-indents to depth level 0 (`div.row` level), making `section.footer` a root-level sibling of `div.row`.
+
+## Automatic `wdl-comp="{semantic-id}"` Attribute
+
+Every generated element automatically receives a `wdl-comp="{semantic-id}"` data attribute:
+- For nodes with a class selector (e.g. `div.hero`, `h1.title`), `{semantic-id}` is the class identifier (`hero`, `title`).
+- For nodes without a class selector (e.g. `header`, `p`), `{semantic-id}` falls back to the HTML tag name (`header`, `p`).
+- Explicit `wdl-comp` attributes set in the component's `attr` object override the automatic default.
 
 Unsupported & Restricted (will THROW at parse time with a hint):
   .class1.class2 Multiple dot selectors — restricted! Strictly 1 `semantic_id` per element node. For extra CSS classes, use `REGISTRY` or `attr[".semantic_id"].class`.

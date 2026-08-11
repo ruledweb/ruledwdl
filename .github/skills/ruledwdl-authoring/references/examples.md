@@ -121,6 +121,21 @@ When sharing state between two components (e.g. Hamburger trigger in Header, Nav
 
 > **CRITICAL**: Notice `"script_deps": ["store-ui", "alpine-cdn"]`. The store initialization script (`store-ui`) MUST be listed BEFORE `alpine-cdn`. Listing `alpine-cdn` first breaks state initialization silently.
 
+```
+div.shell>main>article>h1.title<<footer.site_footer
+```
+- `<<` climbs up 2 levels (`article` -> `main` -> `div.shell`), placing `footer.site_footer` as a sibling of `main` directly under `div.shell`.
+
+```
+div.row>div.col>article>p<@0section.footer
+```
+- `<@0` de-indents to absolute depth 0 (`div.row` level), making `section.footer` a root-level element sibling of `div.row`.
+
+```
+div.row>div.col>article>p<*2section.side
+```
+- `<*2` repeats de-indentation 2 levels, placing `section.side` inside `div.row` as a sibling of `div.col`.
+
 ---
 
 ## 3. Hallucination Guard: Anti-Pattern Cheatsheet

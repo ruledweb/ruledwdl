@@ -16,7 +16,7 @@ const { html } = await composePage(store, 'demo', page);
 ok('renders a doc', html.includes('<!DOCTYPE html>'));
 ok('data binding ${name} → World', html.includes('Hello World'));
 ok('page component renders', html.includes('@ruledwdl/core'));
-ok('layout slot {{content}} injected (div.shell wraps content)', /<div class="[^"]*shell[^"]*"><div class="[^"]*card[^"]*">/.test(html));
+ok('layout slot {{content}} injected (div.shell wraps content)', /<div class="[^"]*shell[^"]*" wdl-comp="shell"><div class="[^"]*card[^"]*" wdl-comp="card">/.test(html));
 ok('tailwind CDN script injected', html.includes('@tailwindcss/browser@4'));
 ok('title applied', html.includes('<title>WDL Demo</title>'));
 
@@ -69,7 +69,7 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   ok('brand tokens emitted after design tokens (wins cascade)', designIdx > -1 && brandIdx > designIdx);
 }
 
-// 5) WDL Layers syntax — de-indentation / subset operator (<)
+// 5) WDL Layers syntax — de-indentation / subset operator (<, <*N, <@N)
 {
   const ast = parseLayers('header>div.container>h1+p<div.banner');
   const header = ast[0];
@@ -90,6 +90,32 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
     shell.children[0].tag === 'main' &&
     footer.tag === 'footer'
   );
+
+  // <*N repeater
+  const astRepeat = parseLayers('div.row>div.col>article>p<*2footer');
+  const rowRep = astRepeat[0];
+  const footerRep = rowRep.children[1];
+  ok('<*N operator repeats de-indentation N levels',
+    rowRep.children.length === 2 &&
+    rowRep.children[0].classes.includes('col') &&
+    footerRep.tag === 'footer'
+  );
+
+  // <@N depth reference (0 = root level elements)
+  const astDepth = parseLayers('div.row>div.col>article>p<@0section.footer');
+  ok('<@N operator de-indents to absolute depth level N (0 = root layer)',
+    astDepth.length === 2 &&
+    astDepth[0].classes.includes('row') &&
+    astDepth[1].classes.includes('footer')
+  );
+  
+  const astDepth1 = parseLayers('div.row>div.col>article>p<@1section.side');
+  const rowD1 = astDepth1[0];
+  ok('<@1 de-indents to depth 1 (child of div.row)',
+    rowD1.children.length === 2 &&
+    rowD1.children[0].classes.includes('col') &&
+    rowD1.children[1].classes.includes('side')
+  );
 }
 
 // 6) WDL Layers strict single semantic_id rule
@@ -101,6 +127,21 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
     threw = err.message.includes('Multiple dot selectors in "div.card.featured" are not allowed');
   }
   ok('restricts multiple dot selectors and enforces 1 semantic_id per node', threw);
+}
+
+// 7) wdl-comp="{semantic-id}" data attribute generation
+{
+  const htmlComp = renderAll({}, [{ layers: 'section.hero>h1.title+p' }], {});
+  ok('generates wdl-comp="{semantic-id}" on elements (class semantic-id and tag fallback)',
+    htmlComp.includes('wdl-comp="hero"') &&
+    htmlComp.includes('wdl-comp="title"') &&
+    htmlComp.includes('wdl-comp="p"')
+  );
+
+  const htmlOverride = renderAll({}, [{ layers: 'button.cta', attr: { '.cta': { 'wdl-comp': 'custom-cta' } } }], {});
+  ok('respects explicit wdl-comp attribute overrides from attr object',
+    htmlOverride.includes('wdl-comp="custom-cta"')
+  );
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
