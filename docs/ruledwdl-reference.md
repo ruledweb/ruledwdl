@@ -38,7 +38,12 @@ An array of entries. Two forms:
   { "layers": "section>div.hero>h1+p+button" }
   { "component": "card", "data_overrides": {...}, "style_overrides": {...} }
 
-The layers form is parsed into a tree. The component form resolves an ID via
+`layers` accepts three interchangeable authoring formats:
+1. **Single String**: `"form.login > div.container > h2.title"`
+2. **Space-Free Flat String Array**: `["form.login", "> div.container", "> h2.title"]`
+3. **5-Element Tuple Array (`WDLDomTree`)**: `[[0, "", "form", "login"], [1, ">", "div", "container"], [2, ">", "h2", "title"]]`
+
+The layers form is parsed into a tree via `WDLDomTree` ([`src/wdl-dom-tree.js`](file:///home/pradeep/cloudflare/workers/wdl-core/src/wdl-dom-tree.js)). The component form resolves an ID via
 `store.getComponent(project, id)` — project-local lookup only.
 
 `data_overrides` is merged into the **page-wide** DATA object (not scoped

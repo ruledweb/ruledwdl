@@ -1,10 +1,11 @@
 # WDL Core — Session Bootstrap & Operational Guidelines
 
 ## 1. Core Architecture & Engine Principles
-- **Host-Agnostic Core (`@ruledwdl/core`)**: Pure ESM engine (`src/`) rendering declarative WDL definitions (`REGISTRY` / `COMPONENTS` / `DATA`) into clean HTML using a pluggable store interface (`src/store.js`). Zero hard framework, D1, KV, or Node IO bindings.
+- **Host-Agnostic Core (`@ruledwdl/core`)**: Pure ESM engine (`src/`) rendering declarative WDL definitions (`REGISTRY` / `COMPONENTS` / `DATA`) into clean HTML using a pluggable store interface (`src/store.js`). Zero hard framework, D1, KV, or Node IO bindings. Zero external runtime dependencies.
 - **CMS & Extension Decoupling**: Core engine stays lean. CMS features (forms, schemas, query resolvers, email rendering) belong in `wdl-extensions/` or host integration libraries.
-- **Layers Syntax Rules**: Emmet-like `tag.semantic_id` syntax.
-  - Supported: `>`, `+`, `<` (de-indent 1 level), `<*N` (repeater: de-indents N levels), `<@N` (depth reference: de-indents to depth N where 0 = root layer), `*N` multipliers, `*items` data loops (over arrays of objects).
+- **Layers Syntax & State Machine (`WDLDomTree`)**: Emmet-like `tag.semantic_id` syntax backed by `WDLDomTree` ([`src/wdl-dom-tree.js`](file:///home/pradeep/cloudflare/workers/wdl-core/src/wdl-dom-tree.js)).
+  - Authoring Formats: Single string expressions, space-free flat string arrays (`["> div.container", "> h2.title"]`), or 5-element tuple arrays (`[depth, operator, tag, semantic_id, repeator]`).
+  - Supported Operators: `>`, `+`, `<` (de-indent 1 level), `<*N` (repeater: de-indents N levels), `<@N` (depth reference: de-indents to depth N where 0 = root layer), `*N` multipliers, `*items` data loops.
   - Restricted: Strictly ONE `semantic_id` per node (no `.class1.class2`). Inline text `{}` and inline attributes `[]` are forbidden.
   - Attribute Generation: Automatically emits `wdl-comp="{semantic-id}"` attribute on every generated HTML element (defaults to class semantic ID or tag fallback, overrideable via `attr` object).
 - **Native Pass-Through Principle**: NO custom wrapper abstractions on top of HTMx, Alpine.js, or Tailwind CSS. Pass standard `hx-*`, `x-*`, and utility classes through raw `attr` objects.
@@ -14,12 +15,12 @@
 - **Design Token & Head Cascade**: Layered CSS variables via `DATA.__design_tokens` -> `DATA.__brand_tokens` (where `__brand_tokens` overrides), and raw `<head>` string injection via `DATA.__head`.
 
 ## 2. CSR Extension Synchronization (`@ruledwdl/csr`)
-- `@ruledwdl/csr` is the zero-dependency, ultra-lightweight (~4 KB) client-side rendering variant of WDL core (omits `marked` and layout shell wrappers).
-- Whenever modifying core layers parsing or element building logic in `@ruledwdl/core`, **MUST** run:
+- `@ruledwdl/csr` is the zero-dependency, ultra-lightweight client-side rendering variant of WDL core.
+- Whenever modifying core layers parsing, element building, or state machine logic in `@ruledwdl/core`, **MUST** run:
   ```bash
   npm run sync:csr
   ```
-  This automatically syncs `layers-parser.js`, `data-resolver.js`, and `element-builder.js` (CSR adapted) to `wdl/extensions/wdl-csr/src/` and rebuilds `dist/wdl-csr.min.js`.
+  This automatically syncs `layers-parser.js`, `data-resolver.js`, `token-expander.js`, `registry-compiler.js`, `element-builder.js`, and `wdl-dom-tree.js` to `wdl/extensions/wdl-csr/src/` and rebuilds `dist/wdl-csr.min.js`.
 
 ## 3. Agent Skills & GitHub Integration
 - Repository-native Agent Skills are maintained under `.github/skills/` (e.g. `.github/skills/ruledwdl-authoring/`).
