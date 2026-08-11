@@ -15,3 +15,4 @@ export {
 } from './layout-composer.js';
 export { renderInlineMarkdown } from './markdown.js';
 export { createMemoryStore } from './store.js';
+export { resolveSchemaVersions } from './schema-version.js';

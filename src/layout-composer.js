@@ -6,6 +6,7 @@
 // `resolveComponent`/`extraScripts` hooks below — core has no built-in knowledge of any of them.
 import { renderAll, wrapPage } from './render-engine.js';
 import { resolvePath } from './data-resolver.js';
+import { resolveSchemaVersions } from './schema-version.js';
 
 const SLOT = '{{content}}';
 
@@ -180,7 +181,8 @@ export async function composePage(store, project, page, { cssDelivery, headInjec
   const seo = mergedPageData.__seo || null;
   const css = cssDelivery !== undefined ? cssDelivery : null;
 
-  const ret = (html) => ({ html, dynamic: hasDynamicComponents });
+  const versions = resolveSchemaVersions(page);
+  const ret = (html) => ({ html, dynamic: hasDynamicComponents, versions });
   const inject = [].concat(headInject || []).filter(Boolean);
 
   if (!chain.length) {

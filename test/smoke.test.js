@@ -1,6 +1,4 @@
-// Smoke test — proves @wdl/core renders end-to-end from a folder of JSON via the FileStore,
-// and that the in-memory store path works too. Run: node test/smoke.test.js
-import { composePage, renderAll, createMemoryStore, parseLayers } from '../src/index.js';
+import { composePage, renderAll, createMemoryStore, parseLayers, resolveSchemaVersions } from '../src/index.js';
 import { createFileStore } from '../src/stores/file-store.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -141,6 +139,39 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   const htmlOverride = renderAll({}, [{ layers: 'button.cta', attr: { '.cta': { 'wdl-comp': 'custom-cta' } } }], {});
   ok('respects explicit wdl-comp attribute overrides from attr object',
     htmlOverride.includes('wdl-comp="custom-cta"')
+  );
+}
+
+// 8) Schema version resolution (schema_version, REGISTRY v2.0, COMPONENTS v2.0, DATA v2.0)
+{
+  const emptyVer = resolveSchemaVersions({});
+  ok('defaults to schema 0.2.0 and sub-schemas 2.0 when omitted',
+    emptyVer.schema_version === '0.2.0' &&
+    emptyVer.registry_version === '2.0' &&
+    emptyVer.components_version === '2.0' &&
+    emptyVer.data_version === '2.0'
+  );
+
+  const customVer = resolveSchemaVersions({
+    schema_version: '0.2.0',
+    REGISTRY: { $version: '2.0' },
+    COMPONENTS: [{ $version: '2.0', layers: 'div.hero' }],
+    DATA: { $version: '2.0' }
+  });
+  ok('extracts explicit sub-schema versions accurately',
+    customVer.schema_version === '0.2.0' &&
+    customVer.registry_version === '2.0' &&
+    customVer.components_version === '2.0' &&
+    customVer.data_version === '2.0'
+  );
+
+  const storeVer = createMemoryStore({});
+  const resVer = await composePage(storeVer, 'demo', {
+    schema_version: '0.2.0',
+    COMPONENTS: [{ layers: 'div.test' }]
+  });
+  ok('composePage returns versions metadata in output',
+    resVer.versions && resVer.versions.schema_version === '0.2.0'
   );
 }
 
