@@ -2,20 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>@wdl/core — plain HTML example</title>
+  <title>@ruledwdl/core v0.3.0 — Plain HTML Example</title>
   <!--
-    No build step. The browser resolves bare specifiers (`@wdl/core`, `marked`) via this
-    import map — `@wdl/core` points straight at the repo's src/index.js, `marked` (src/markdown.js's
-    only dependency) comes from a CDN ESM build. Serve this file over http(s) — file:// is blocked
-    by CORS for module imports in most browsers. From the repo root:
-      npx serve .          (or) python3 -m http.server
-    then open http://localhost:<port>/examples/plain-html/
+    No build step. The browser resolves bare specifier `@ruledwdl/core` via this
+    import map pointing directly at src/index.js.
+    100% Zero-Dependency Core in v0.3.0 — no external markdown runtime required.
   -->
   <script type="importmap">
   {
     "imports": {
-      "@wdl/core": "../../src/index.js",
-      "marked": "https://esm.sh/marked@12.0.2"
+      "@ruledwdl/core": "../../src/index.js"
     }
   }
   </script>
@@ -25,36 +21,34 @@
   </style>
 </head>
 <body>
-  <h1>@wdl/core rendered client-side</h1>
-  <p>composePage() ran entirely in the browser — no server, no build step.</p>
+  <h1>@ruledwdl/core v0.3.0 (Zero-Dependency Engine)</h1>
+  <p>composePage() ran entirely in the browser — no server, no build step, 100% zero external dependencies.</p>
 
-  <!--
-    composePage() returns a FULL <!DOCTYPE html> document (via wrapPage), so it's hosted in an
-    iframe via srcdoc rather than injected into this page's DOM (which would nest <html>/<head>
-    inside a <div>, which browsers don't render correctly).
-  -->
   <iframe id="out" title="WDL render output"></iframe>
 
   <script type="module">
-    import { composePage, createMemoryStore } from '@wdl/core';
+    import { composePage, createMemoryStore, WDLDomTree } from '@ruledwdl/core';
 
-    // A store is just a plain object of async lookups — createMemoryStore wraps in-memory data
-    // in that shape. Any backend (fetch calls to an API, IndexedDB, ...) works the same way.
+    // In-memory store with Schema v2.0 component and layout definitions
     const store = createMemoryStore({
       layouts: {
         base: {
+          $version: '2.0',
           name: 'base',
           COMPONENTS: [{
+            $version: '2.0',
             layers: 'div.shell',
             attr: { '.shell': { text: '{{content}}' } },
           }],
           DATA: {
+            $version: '2.0',
             __design_tokens: ':root{--color-primary:#4f46e5;}',
           },
         },
       },
       components: {
         badge: {
+          $version: '2.0',
           layers: 'span.badge',
           attr: { '.badge': { text: '${label}' } },
         },
@@ -62,24 +56,36 @@
     });
 
     const page = {
+      $version: '0.3.0',
       title: 'Hello from the browser',
       layout: 'base',
       REGISTRY: {
+        $version: '2.0',
         shell: { style: 'font-family:system-ui;padding:32px;' },
         badge: { style: 'display:inline-block;background:var(--color-primary);color:#fff;padding:4px 10px;border-radius:999px;font-size:12px;' },
         card:  { style: 'margin-top:12px;' },
       },
       COMPONENTS: [
-        { component: 'badge', data_overrides: { label: '@wdl/core' } },
-        { layers: 'div.card>h1+p', attr: {
-          h1: { text: 'Hello ${name} 👋' },
-          p:  { text: 'This ran with **zero build step** — plain ES modules in the browser.' },
-        } },
+        { $version: '2.0', component: 'badge', data_overrides: { label: '@ruledwdl/core@0.3.0' } },
+        {
+          $version: '2.0',
+          // Space-free flat string array format (Zero indent whitespace burden)
+          layers: [
+            "div.card",
+            "> h1.title",
+            "+ p.subtitle"
+          ],
+          attr: {
+            '.title':    { text: 'Hello ${name} 👋' },
+            '.subtitle': { text: 'This ran with zero build step — 100% zero-dependency WDL Core v0.3.0.' },
+          }
+        },
       ],
-      DATA: { name: 'World' },
+      DATA: { $version: '2.0', name: 'World' },
     };
 
-    const { html } = await composePage(store, 'demo', page);
+    const { html, versions } = await composePage(store, 'demo', page);
+    console.log('Schema versions metadata:', versions);
     document.getElementById('out').srcdoc = html;
   </script>
 </body>

@@ -2,15 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>@wdl/core + Alpine.js cross-component store</title>
-  <!-- No build step — same import map approach as examples/plain-html/. -->
-  <script type="importmap">
-  {
-    "imports": {
-      "marked": "https://esm.sh/marked@12.0.2"
-    }
-  }
-  </script>
+  <title>@ruledwdl/core v0.3.0 + Alpine.js cross-component store</title>
   <style>
     body { font-family: system-ui, sans-serif; margin: 0; }
     p.note { max-width: 640px; margin: 24px; color: #52525b; }
@@ -18,35 +10,42 @@
 </head>
 <body>
   <p class="note">
-    Everything below <code>#app</code> is rendered by <code>@wdl/core</code> directly into THIS
+    Everything below <code>#app</code> is rendered by <code>@ruledwdl/core@0.3.0</code> directly into THIS
     page's real DOM — no iframe. The hamburger button and the drawer panel are two
     <strong>separate WDL components</strong> (<code>site-nav</code> and <code>drawer</code>) with
     independent Alpine <code>x-data</code> scopes; they share state only through a global
     <code>Alpine.store('ui', ...)</code>, registered by a <code>head_blocking</code> script
-    declared as a <code>script_dep</code> — the pattern documented under "Cross-component state"
-    in docs/ruledwdl-reference.md.
+    declared as a <code>script_dep</code>.
   </p>
 
   <div id="app"><!-- WDL output lands here --></div>
 
   <script type="module">
     import { composePage, createMemoryStore } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/core/dist/ruledwdl.esm.js';
+    import { marked } from 'https://cdn.jsdelivr.net/npm/marked@12.0.2/+esm';
 
     const store = createMemoryStore({
       components: {
         'site-nav': {
-          layers: 'nav.navbar>button.hamburger+span.brand',
+          $version: '2.0',
+          layers: [
+            'nav.navbar',
+            '> button.hamburger',
+            '+ span.brand'
+          ],
           attr: {
             '.hamburger': { alpine: { '@click': "$store.ui.drawerOpen = !$store.ui.drawerOpen" }, text: '☰' },
-            '.brand':     { text: 'wdl-core + Alpine store demo' },
+            '.brand':     { text: 'ruledwdl core v0.3.0 + Alpine store demo' },
           },
-          // store-ui MUST be declared before alpine-cdn: collectAndDedupScripts preserves
-          // script_deps order, and the store-registration listener has to exist before Alpine's
-          // own bootstrap script fires `alpine:init`.
           script_deps: ['store-ui', 'alpine-cdn'],
         },
         'drawer': {
-          layers: 'aside.drawer>p.drawer-text+button.close',
+          $version: '2.0',
+          layers: [
+            'aside.drawer',
+            '> p.drawer-text',
+            '+ button.close'
+          ],
           attr: {
             '.drawer':      { alpine: { 'x-show': '$store.ui.drawerOpen', 'x-transition': '' } },
             '.drawer-text': { text: "This panel is a **separate** WDL component from the button above — it only knows the drawer is open via \\$store.ui.drawerOpen." },
@@ -56,8 +55,6 @@
         },
       },
       scripts: {
-        // Registers the shared store before Alpine scans the DOM — see docs/ruledwdl-reference.md
-        // "Cross-component state (limitation — use custom script for now)".
         'store-ui': {
           id: 'store-ui',
           type: 'inline',
@@ -75,8 +72,10 @@
     });
 
     const page = {
-      title: 'Alpine store demo',
+      $version: '0.3.0',
+      title: 'Alpine store demo v0.3.0',
       REGISTRY: {
+        $version: '2.0',
         navbar: { style: 'display:flex;align-items:center;gap:12px;padding:12px 24px;background:#111827;color:#fff;' },
         hamburger: { style: 'font-size:20px;background:none;border:0;color:inherit;cursor:pointer;' },
         drawer: { style: 'margin:0 24px;padding:16px 20px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;' },
@@ -84,18 +83,26 @@
         content: { style: 'margin:24px;color:#3f3f46;' },
       },
       COMPONENTS: [
-        { component: 'site-nav' },
-        { component: 'drawer' },
-        { layers: 'main.content>p', attr: { p: { text: 'Click the ☰ button — it toggles the drawer above via the shared Alpine store.' } } },
+        { $version: '2.0', component: 'site-nav' },
+        { $version: '2.0', component: 'drawer' },
+        {
+          $version: '2.0',
+          layers: 'main.content>p',
+          attr: { p: { text: 'Click the ☰ button — it toggles the drawer above via the shared Alpine store.' } }
+        },
       ],
-      DATA: {},
+      DATA: { $version: '2.0' },
     };
 
-    const { html } = await composePage(store, 'demo', page);
+    const { html } = await composePage(store, 'demo', page, {
+      transformText: (text, node) => {
+        if (node.classes.includes('drawer-text')) {
+          return marked.parseInline(text);
+        }
+        return text;
+      }
+    });
 
-    // composePage() returns a FULL document; parse it and graft the pieces into THIS page's real
-    // DOM instead of nesting it in an iframe. Setting innerHTML does NOT execute <script> tags, so
-    // scripts are pulled out and re-created as real elements below, in the order WDL emitted them.
     const parsed = new DOMParser().parseFromString(html, 'text/html');
     document.title = parsed.title;
     parsed.head.querySelectorAll('style').forEach(s => document.head.appendChild(s.cloneNode(true)));
@@ -103,24 +110,13 @@
     const scripts = [...parsed.head.querySelectorAll('script'), ...parsed.body.querySelectorAll('script')];
     scripts.forEach(s => s.remove());
 
-    // Content first, so Alpine's initial scan (triggered by its own script loading, or our
-    // explicit Alpine.initTree() call below) finds x-data/x-show/@click already in the DOM.
     document.getElementById('app').innerHTML = parsed.body.innerHTML;
 
-    // Inline scripts execute synchronously the instant they're appended — so store-ui's listener
-    // is guaranteed registered before alpine-cdn (fetched async) ever fires `alpine:init`.
     for (const old of scripts) {
       const s = document.createElement('script');
       for (const { name, value } of old.attributes) s.setAttribute(name, value);
       if (old.textContent) s.textContent = old.textContent;
       if ((s.getAttribute('src') || '').includes('alpinejs')) {
-        // Alpine's CDN bundle auto-starts on its own (queueMicrotask(() => Alpine.start())) —
-        // there is no reliable hook to make it WAIT for content injected after its script tag was
-        // added, so instead of racing that auto-start, explicitly re-scan our container once
-        // Alpine has loaded: `Alpine.initTree(el)` is the documented API for "initialize this
-        // element (and children) even though Alpine already started" —
-        // https://alpinejs.dev/globals/alpine-globals#alpine-inittree — safe to call regardless
-        // of whether the auto-scan already covered these elements.
         s.addEventListener('load', () => window.Alpine?.initTree(document.getElementById('app')));
       }
       document.head.appendChild(s);

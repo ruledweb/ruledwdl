@@ -1,11 +1,10 @@
-// examples/node-esm/render.mjs — using @wdl/core as a plain ES module import in your own script,
-// as opposed to going through the packaged `wdl` CLI (bin/wdl.js). Same package, different entry
-// point: this is what embedding the renderer inside a bigger Node program looks like (a build step,
-// an SSG, a Worker's fetch handler in dev, a test harness, ...).
+// examples/node-esm/render.mjs — @ruledwdl/core@0.3.0 as a plain ES module import
+// 100% Zero-Dependency Core Engine with WDLDomTree & Pluggable Transformation Hooks.
 //
 // Run: node examples/node-esm/render.mjs
-import { composePage, createMemoryStore } from '../../src/index.js';
+import { composePage, createMemoryStore, WDLDomTree } from '../../src/index.js';
 import { createFileStore } from '../../src/stores/file-store.js';
+import { marked } from 'marked';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -14,28 +13,71 @@ const here = dirname(fileURLToPath(import.meta.url));
 // 1) File-backed store — reuses the repo's own fixtures/demo project (a folder of JSON).
 const fileStore = createFileStore(join(here, '..', '..', 'fixtures', 'demo'));
 const demoPage = await fileStore.getPage('demo', '/');
-const { html: fileHtml } = await composePage(fileStore, 'demo', demoPage);
+const { html: fileHtml, versions } = await composePage(fileStore, 'demo', demoPage);
 console.log('--- rendered from fixtures/demo (file store) ---');
+console.log('Versions metadata:', versions);
 console.log(fileHtml.slice(0, 120) + ' ...\n');
 
-// 2) In-memory store — no filesystem at all, useful for tests or when pages are generated
-// programmatically rather than authored as files (e.g. fetched from an API at request time).
+// 2) In-memory store — Schema v2.0 component definitions with WDLDomTree 5-element tuple arrays
 const memStore = createMemoryStore({
   layouts: {
     base: {
+      $version: '2.0',
       name: 'base',
-      COMPONENTS: [{ layers: 'main.wrap', attr: { '.wrap': { text: '{{content}}' } } }],
-      DATA: { __design_tokens: ':root{--accent:#059669;}' },
+      COMPONENTS: [
+        {
+          $version: '2.0',
+          // 5-element tuple array state format: [depth, operator, tag, semantic_id, repeator]
+          layers: [
+            [0, '',  'main', 'wrap', null]
+          ],
+          attr: { '.wrap': { text: '{{content}}' } }
+        }
+      ],
+      DATA: { $version: '2.0', __design_tokens: ':root{--accent:#059669;}' },
     },
   },
 });
+
 const page = {
-  title: 'Node ESM example',
+  $version: '0.3.0',
+  title: 'Node ESM example v0.3.0',
   layout: 'base',
-  REGISTRY: { h1: { style: 'color:var(--accent);font-family:system-ui;' } },
-  COMPONENTS: [{ layers: 'h1', attr: { h1: { text: 'Hello ${name} from Node' } } }],
-  DATA: { name: 'World' },
+  REGISTRY: {
+    $version: '2.0',
+    title: { style: 'color:var(--accent);font-family:system-ui;' },
+    body: { style: 'font-family:system-ui;margin-top:8px;' }
+  },
+  COMPONENTS: [
+    {
+      $version: '2.0',
+      // Space-free flat string array format
+      layers: [
+        'h1.title',
+        '+ p.body_md'
+      ],
+      attr: {
+        '.title': { text: 'Hello ${name} from Node (v0.3.0)' },
+        '.body_md': { text: 'This text is transformed via external **marked** parser plugged into `opts.transformText` hook.' }
+      }
+    }
+  ],
+  DATA: { $version: '2.0', name: 'World' },
 };
-const { html: memHtml } = await composePage(memStore, 'demo', page);
-console.log('--- rendered from an in-memory store ---');
+
+// Render with Stage-1 transformData and Stage-2 transformText hooks
+const { html: memHtml } = await composePage(memStore, 'demo', page, {
+  transformData: (data) => {
+    data.name = data.name.toUpperCase();
+    return data;
+  },
+  transformText: (text, node) => {
+    if (node.classes.includes('body_md')) {
+      return marked.parseInline(text);
+    }
+    return text;
+  }
+});
+
+console.log('--- rendered from in-memory store with transformation hooks ---');
 console.log(memHtml);
