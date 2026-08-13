@@ -7,7 +7,6 @@
   <script type="importmap">
   {
     "imports": {
-      "@wdl/core": "../../src/index.js",
       "marked": "https://esm.sh/marked@12.0.2"
     }
   }
@@ -31,7 +30,7 @@
   <div id="app"><!-- WDL output lands here --></div>
 
   <script type="module">
-    import { composePage, createMemoryStore } from '@wdl/core';
+    import { composePage, createMemoryStore } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/core/dist/ruledwdl.esm.js';
 
     const store = createMemoryStore({
       components: {
