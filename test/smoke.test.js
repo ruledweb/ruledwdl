@@ -319,5 +319,84 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   );
 }
 
+// 12) @ruledwdl/state ComponentManager and ComponentState operations
+{
+  const { ComponentManager } = await import('../packages/state/dist/index.js');
+  const mgr = new ComponentManager();
+  const hero = mgr.create('hero', {
+    layers: 'section.hero > div.container > h1.title + p.subtitle',
+    attr: {},
+    data: {},
+  });
+  hero.layers.after('subtitle', 'button.cta');
+  hero.layers.wrap('title', 'div.title-wrapper');
+  hero.layers.append('container', 'span.badge');
+  hero.layers.remove('subtitle');
+  const updatedLayers = hero.layers.list();
+
+  ok('@ruledwdl/state ComponentManager creates and mutates component layers tree',
+    updatedLayers === 'section.hero > div.container > div.title-wrapper > h1.title < button.cta + span.badge'
+  );
+}
+
+// 13) Registry Schema V2.1 Scoped CSS Rules (@scope), data-variant, and token resolution
+{
+  const storeV21 = createMemoryStore({});
+  const pageV21 = {
+    $version: '0.3.0',
+    title: 'V2.1 Scoped CSS Test',
+    REGISTRY: {
+      $version: '2.1',
+      __tokens__: {
+        vars: {
+          'color-primary-hover': '#4338ca',
+          'space-card': '1.5rem'
+        }
+      },
+      'card-base': {
+        vars: {
+          pad: '${space-card}'
+        },
+        rules: [
+          { selector: ':scope', css: { padding: '$_{pad}' } }
+        ]
+      },
+      card: {
+        uses: ['card-base'],
+        vars: {
+          bg: '#ffffff'
+        },
+        defaultVariant: 'elevated',
+        variants: {
+          elevated: { css: { 'box-shadow': '0 10px 15px rgba(0,0,0,0.1)' } }
+        },
+        rules: [
+          { selector: ':scope', css: { display: 'flex', background: '$_{bg}' } },
+          { selector: '& .button', css: { background: '#e5e7eb' } },
+          { media: '(min-width: 768px)', selector: '&:hover .button', css: { background: '${color-primary-hover}' } }
+        ]
+      }
+    },
+    COMPONENTS: [
+      { layers: 'div.card > button.button' }
+    ]
+  };
+
+  const { html: htmlV21 } = await composePage(storeV21, 'demo', pageV21);
+
+  ok('V2.1 emits <style data-wdl="components"> with @scope rules',
+    htmlV21.includes('<style data-wdl="components">') &&
+    htmlV21.includes('@scope (div.card)') &&
+    htmlV21.includes('padding:var(--space-card)') &&
+    htmlV21.includes(':scope[data-variant="elevated"]') &&
+    htmlV21.includes('@media (min-width: 768px)')
+  );
+
+  ok('V2.1 renders data-variant attribute on element',
+    htmlV21.includes('data-variant="elevated"') &&
+    htmlV21.includes('wdl-comp="card"')
+  );
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

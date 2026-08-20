@@ -15,7 +15,7 @@ import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const coreSrcDir = resolve(__dirname, '../src');
-const csrDir = resolve(__dirname, '../../wdl/extensions/wdl-csr');
+const csrDir = resolve(__dirname, '../packages/csr');
 const csrSrcDir = resolve(csrDir, 'src');
 
 if (!existsSync(csrSrcDir)) {

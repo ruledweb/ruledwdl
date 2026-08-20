@@ -1,3 +1,4 @@
+// src/registry-compiler.js — Synced from @ruledwdl/core
 import { expandScopedVars, resolveVariableValue } from './token-expander.js';
 
 /**

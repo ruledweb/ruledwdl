@@ -16,5 +16,5 @@ export {
 export { createMemoryStore } from './store.js';
 export { resolveSchemaVersions } from './schema-version.js';
 export { expandScopedVars } from './token-expander.js';
-export { normalizeRegistry, normalizeRegistryEntry, compileGlobalTokens, resolveTokenInheritance } from './registry-compiler.js';
+export { normalizeRegistry, normalizeRegistryEntry, compileGlobalTokens, compileComponentRules, expandCssValue, resolveTokenInheritance } from './registry-compiler.js';
 export { WDLDomTree, validateOperator, validateSemanticId, normalizeTuple, parseStringTokenToTuple } from './wdl-dom-tree.js';

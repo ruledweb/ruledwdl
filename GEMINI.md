@@ -24,7 +24,7 @@
   ```bash
   npm run sync:csr
   ```
-  This automatically syncs `layers-parser.js`, `data-resolver.js`, `token-expander.js`, `registry-compiler.js`, `element-builder.js`, and `wdl-dom-tree.js` to `wdl/extensions/wdl-csr/src/` and rebuilds `dist/wdl-csr.min.js`.
+  This automatically syncs `layers-parser.js`, `data-resolver.js`, `token-expander.js`, `registry-compiler.js`, `element-builder.js`, and `wdl-dom-tree.js` to `packages/csr/src/` and rebuilds `packages/csr/dist/wdl-csr.min.js`.
 
 ## 3. Agent Skills & GitHub Integration
 - Repository-native Agent Skills are maintained under `.github/skills/` (e.g. `.github/skills/ruledwdl-authoring/`).

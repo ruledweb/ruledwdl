@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>@ruledwdl/core v0.3.0 — Plain HTML Example</title>
@@ -11,15 +12,28 @@
   <script type="importmap">
   {
     "imports": {
-      "@ruledwdl/core": "../../src/index.js"
+      "@ruledwdl/core": "../../src/index.js",
+      "@ruledwdl/state": "../../packages/state/dist/index.js"
     }
   }
   </script>
   <style>
-    body { font-family: ui-monospace, monospace; padding: 40px; background: #f4f4f5; }
-    iframe { width: 100%; height: 420px; border: 1px solid #d4d4d8; border-radius: 8px; background: #fff; }
+    body {
+      font-family: ui-monospace, monospace;
+      padding: 40px;
+      background: #f4f4f5;
+    }
+
+    iframe {
+      width: 100%;
+      height: 420px;
+      border: 1px solid #d4d4d8;
+      border-radius: 8px;
+      background: #fff;
+    }
   </style>
 </head>
+
 <body>
   <h1>@ruledwdl/core v0.3.0 (Zero-Dependency Engine)</h1>
   <p>composePage() ran entirely in the browser — no server, no build step, 100% zero external dependencies.</p>
@@ -28,7 +42,7 @@
 
   <script type="module">
     import { composePage, createMemoryStore, WDLDomTree } from '@ruledwdl/core';
-
+    import { ComponentManager, ComponentState } from '@ruledwdl/state'
     // In-memory store with Schema v2.0 component and layout definitions
     const store = createMemoryStore({
       layouts: {
@@ -63,7 +77,7 @@
         $version: '2.0',
         shell: { style: 'font-family:system-ui;padding:32px;' },
         badge: { style: 'display:inline-block;background:var(--color-primary);color:#fff;padding:4px 10px;border-radius:999px;font-size:12px;' },
-        card:  { style: 'margin-top:12px;' },
+        card: { style: 'margin-top:12px;' },
       },
       COMPONENTS: [
         { $version: '2.0', component: 'badge', data_overrides: { label: '@ruledwdl/core@0.3.0' } },
@@ -76,7 +90,7 @@
             "+ p.subtitle"
           ],
           attr: {
-            '.title':    { text: 'Hello ${name} 👋' },
+            '.title': { text: 'Hello ${name} 👋' },
             '.subtitle': { text: 'This ran with zero build step — 100% zero-dependency WDL Core v0.3.0.' },
           }
         },
@@ -87,6 +101,29 @@
     const { html, versions } = await composePage(store, 'demo', page);
     console.log('Schema versions metadata:', versions);
     document.getElementById('out').srcdoc = html;
+
+    const manager = new ComponentManager();
+    const hero = manager.create("hero", {
+      layers: "section.hero > div.container > h1.title + p.subtitle",
+      attr: {},
+      data: {},
+    });
+
+    // Add a button after the subtitle
+    hero.layers.after("subtitle", "button.cta");
+
+    // Wrap the title with a div
+    hero.layers.wrap("title", "div.title-wrapper");
+
+    // Append a new element inside container
+    hero.layers.append("container", "span.badge");
+
+    // Remove something
+    hero.layers.remove("subtitle");
+
+    console.log(hero.layers.list());
+    // → updated layers string
   </script>
 </body>
+
 </html>

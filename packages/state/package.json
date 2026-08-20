@@ -1,0 +1,21 @@
+{
+    "name": "@ruledwdl/state",
+    "version": "0.1.0",
+    "description": "Simple state + ops + events manager for RuledWDL components",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "keywords": [
+        "ruledwdl",
+        "state",
+        "wdl"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^5.9.3"
+    }
+}

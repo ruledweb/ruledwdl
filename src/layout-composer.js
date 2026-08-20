@@ -120,9 +120,10 @@ function tokenStyleTag(name, css) {
 // Builds the design/brand-token <style> tags for one render: __design_tokens first (layered,
 // base layout → page), __brand_tokens second so it always wins any overlapping custom property
 // regardless of which level declared it — see docs/ruledwdl-reference.md "Design tokens".
-function buildTokenStyles(chain, pageData, themeCss = '') {
+function buildTokenStyles(chain, pageData, themeCss = '', componentCss = '') {
   return [
     tokenStyleTag('theme-tokens', themeCss),
+    tokenStyleTag('components', componentCss),
     tokenStyleTag('design-tokens', collectCssTokens('__design_tokens', chain, pageData)),
     tokenStyleTag('brand-tokens', collectCssTokens('__brand_tokens', chain, pageData)),
   ].filter(Boolean);
@@ -194,11 +195,11 @@ export async function composePage(store, project, page, { cssDelivery, headInjec
 
   mergedReg = Object.assign({}, mergedReg, ...chain.map(l => l.REGISTRY || {}), pageREG);
 
-  const { normalizedRegistry, themeCss } = normalizeRegistry(mergedReg);
+  const { normalizedRegistry, themeCss, componentCss } = normalizeRegistry(mergedReg);
   const renderOpts = { transformText };
 
   if (!chain.length) {
-    const head0 = [...buildTokenStyles([], mergedData, themeCss), ...[].concat(mergedData.__head || []), ...inject].filter(Boolean);
+    const head0 = [...buildTokenStyles([], mergedData, themeCss, componentCss), ...[].concat(mergedData.__head || []), ...inject].filter(Boolean);
     return ret(wrapPage(renderAll(normalizedRegistry, resolvedCOMPS, mergedData, renderOpts), page.title, scriptBuckets, seo, css, head0));
   }
 
@@ -212,7 +213,7 @@ export async function composePage(store, project, page, { cssDelivery, headInjec
 
   if (chain[0]?.fullPage === true) return ret(html || '<!DOCTYPE html><html><body></body></html>');
   const headExtra = [
-    ...buildTokenStyles(chain, mergedPageData, themeCss),
+    ...buildTokenStyles(chain, mergedPageData, themeCss, componentCss),
     ...chain.flatMap(l => [].concat(l.DATA?.__head || [])),
     ...[].concat(mergedPageData.__head || []),
     ...inject,
