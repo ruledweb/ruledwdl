@@ -287,6 +287,40 @@ export class ComponentState {
         };
     }
 
+    // ---------- Registry ----------
+    get registry() {
+        const self = this;
+        return {
+            get(): Record<string, any> | undefined {
+                return self._registry ? structuredClone(self._registry) : undefined;
+            },
+
+            set(registry: Record<string, any>) {
+                self._registry = structuredClone(registry);
+                self.emit("registry:change" as any, "set", self.id, self._registry);
+            },
+
+            update(patch: Record<string, any>) {
+                self._registry = { ...(self._registry || {}), ...structuredClone(patch) };
+                self.emit("registry:change" as any, "update", self.id, patch);
+            },
+
+            addRule(rule: { selector: string; media?: string; css: Record<string, string> }) {
+                if (!self._registry) self._registry = {};
+                if (!Array.isArray(self._registry.rules)) self._registry.rules = [];
+                self._registry.rules.push(structuredClone(rule));
+                self.emit("registry:change" as any, "addRule", self.id, rule);
+            },
+
+            removeRule(selector: string) {
+                if (self._registry && Array.isArray(self._registry.rules)) {
+                    self._registry.rules = self._registry.rules.filter((r: any) => r.selector !== selector);
+                    self.emit("registry:change" as any, "removeRule", self.id, selector);
+                }
+            },
+        };
+    }
+
     // ---------- Events ----------
     on(event: string, handler: EventHandler): () => void {
         return this.bus.on(event, handler);

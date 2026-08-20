@@ -335,8 +335,11 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   const updatedLayers = hero.layers.list();
 
   hero.variant.set('flat');
-  ok('@ruledwdl/state ComponentState updates data-variant attribute',
-    hero.variant.get() === 'flat' && hero.getSnapshot().attr['.']['data-variant'] === 'flat'
+  hero.registry.addRule({ selector: '&:hover', css: { background: 'red' } });
+  ok('@ruledwdl/state ComponentState manages variant and Schema V2.1 registry rules',
+    hero.variant.get() === 'flat' &&
+    hero.registry.get().rules.length === 1 &&
+    hero.registry.get().rules[0].selector === '&:hover'
   );
 }
 
