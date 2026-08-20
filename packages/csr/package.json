@@ -1,6 +1,6 @@
 {
   "name": "@ruledwdl/csr",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Ultra-lightweight client-side rendering extension for WDL components. Zero markdown parsing, zero DOM overhead.",
   "main": "src/index.js",
   "type": "module",
@@ -10,7 +10,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "examples"
   ],
   "exports": {
     ".": "./src/index.js",

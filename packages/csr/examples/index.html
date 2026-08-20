@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>@ruledwdl/csr v0.3.1 — Client-Side Rendering & Hydration Example</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@ruledwdl/csr": "../src/index.js"
+    }
+  }
+  </script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 40px;
+      background: #f4f4f5;
+    }
+    .demo-card {
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      padding: 24px;
+      background: #ffffff;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>@ruledwdl/csr v0.3.1 (Client-Side Renderer)</h1>
+  <p>Zero-dependency client rendering with automatic <code>&lt;head&gt;</code> Scoped CSS injection (Schema v2.1).</p>
+
+  <div class="demo-card">
+    <h2>1. Direct Synchronous Render</h2>
+    <div id="render-target"></div>
+  </div>
+
+  <div class="demo-card">
+    <h2>2. Auto-Hydration via <code>[wdl-csr]</code> Target</h2>
+    <div wdl-csr="hero-widget"></div>
+  </div>
+
+  <script type="module">
+    import { render, hydrate } from '@ruledwdl/csr';
+
+    // 1. Direct Client-Side Render
+    const registry = {
+      $version: "2.1",
+      __tokens__: {
+        vars: {
+          "color-primary": "#4f46e5",
+          "color-primary-hover": "#4338ca"
+        }
+      },
+      card: {
+        rules: [
+          { selector: ":scope", css: { "display": "flex", "flex-direction": "column", "gap": "12px" } },
+          { selector: "& .title", css: { "color": "var(--color-primary)", "margin": "0" } },
+          { selector: "& .btn", css: { "background": "#e5e7eb", "padding": "8px 16px", "border-radius": "6px", "border": "none", "cursor": "pointer" } },
+          { media: "(min-width: 640px)", selector: "&:hover .btn", css: { "background": "var(--color-primary-hover)", "color": "#ffffff" } }
+        ]
+      }
+    };
+
+    const components = [
+      {
+        layers: "div.card > h3.title + p.desc + button.btn",
+        attr: {
+          ".title": { text: "Rendered via @ruledwdl/csr" },
+          ".desc": { text: "This markup and its @scope CSS rules were generated completely on the client side." },
+          ".btn": { text: "Hover over Card on Desktop" }
+        }
+      }
+    ];
+
+    document.getElementById('render-target').innerHTML = render(registry, components, {});
+
+    // 2. Client-Side Hydration Payload
+    window.WDL_CSR = {
+      "hero-widget": {
+        REGISTRY: registry,
+        COMPONENTS: [
+          {
+            layers: "div.card > h3.title + button.btn",
+            attr: {
+              ".title": { text: "Hydrated Widget Component" },
+              ".btn": { text: "Hydrated Button" }
+            }
+          }
+        ],
+        DATA: {}
+      }
+    };
+
+    // Hydrate all [wdl-csr] targets automatically
+    hydrate();
+  </script>
+</body>
+</html>
