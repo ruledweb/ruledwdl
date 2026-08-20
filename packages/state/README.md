@@ -3,7 +3,7 @@
 State management, DOM tree mutation, and event bus manager for RuledWDL components.
 
 [![npm version](https://img.shields.io/npm/v/@ruledwdl/state.svg)](https://www.npmjs.com/package/@ruledwdl/state)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 
 ---
 
@@ -76,4 +76,4 @@ console.log(hero.layers.list());
 
 ## License
 
-MIT License.
+Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0-or-later).

@@ -8,7 +8,7 @@
 
 ---
 
-## Features & Recent Updates (v0.3.1)
+## Features & Recent Updates (v0.3.2)
 
 - **Host-Agnostic Engine**: Zero framework overhead — runs natively in Node.js, Cloudflare Workers, Edge runtimes, or modern browsers with **0 build tools**.
 - **Registry Schema V2.1**: Native browser **Scoped CSS Rules (`@scope`)** support via flat `rules: [{ selector, media?, css }]` arrays compiled directly into `<style data-wdl="components">`.
@@ -21,11 +21,11 @@
 
 ## Specifications & Documentation
 
-- **[`specifications/registry.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/specifications/registry.md)** — `REGISTRY` Specification (`v2.1`)
-- **[`docs/registry-revamp/RegistrySchemaV2.1.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/docs/registry-revamp/RegistrySchemaV2.1.md)** — Schema V2.1 Scoped CSS Rules (`@scope`) Reference
-- **[`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/specifications/component/v2.0.md)** — `COMPONENTS` Specification (`v2.0`)
-- **[`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/specifications/data/v2.0.md)** — `DATA` Specification (`v2.0`)
-- **[`docs/ruledwdl-reference.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/docs/ruledwdl-reference.md)** — RuledWDL Complete Engine Reference
+- **[REGISTRY Specification (v2.1)](specifications/registry.md)** — Scoped CSS rules, token inheritance & syntax rules.
+- **[Registry Schema V2.1 Reference](docs/registry-revamp/RegistrySchemaV2.1.md)** — Complete Scoped CSS `@scope` rules design guide.
+- **[COMPONENTS Specification (v2.0)](specifications/component/v2.0.md)** — Component definitions, overrides, and layers grammar.
+- **[DATA Specification (v2.0)](specifications/data/v2.0.md)** — Page state, array loop binding, SEO, and token declarations.
+- **[RuledWDL Complete Engine Reference](docs/ruledwdl-reference.md)** — Architecture, stores, and layout composition guide.
 
 ---
 
@@ -39,13 +39,13 @@ npm install @ruledwdl/core
 
 ## Ecosystem Packages
 
-The RuledWDL monorepo maintains three core packages under `packages/`:
+The RuledWDL monorepo maintains three core packages:
 
-| Package | Version | Description |
-|---|---|---|
-| **[`@ruledwdl/core`](https://www.npmjs.com/package/@ruledwdl/core)** | `0.3.1` | Core layout composition engine, layers parser, store interfaces, and registry compiler. |
-| **[`@ruledwdl/csr`](https://www.npmjs.com/package/@ruledwdl/csr)** | `0.3.1` | Ultra-lightweight client-side renderer & DOM hydrator with auto-injection of `<style>` tags in `<head>`. |
-| **[`@ruledwdl/state`](https://www.npmjs.com/package/@ruledwdl/state)** | `0.1.1` | Headless in-memory component state manager for `layers`, `attr`, `data`, `variant`, and Schema V2.1 `registry` rules. |
+| Package | Workspace Folder | NPM Package | Version | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`@ruledwdl/core`** | [Root (`./`)](./) | [`@ruledwdl/core`](https://www.npmjs.com/package/@ruledwdl/core) | `0.3.2` | Core layout composition engine, layers parser, store interfaces, and registry compiler. |
+| **`@ruledwdl/csr`** | [`packages/csr`](packages/csr) | [`@ruledwdl/csr`](https://www.npmjs.com/package/@ruledwdl/csr) | `0.3.2` | Ultra-lightweight client-side renderer & DOM hydrator with auto-injection of `<style>` tags in `<head>`. |
+| **`@ruledwdl/state`** | [`packages/state`](packages/state) | [`@ruledwdl/state`](https://www.npmjs.com/package/@ruledwdl/state) | `0.1.2` | Headless component state manager for `layers`, `attr`, `data`, `variant`, and `registry` rules. |
 
 ---
 
