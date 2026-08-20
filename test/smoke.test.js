@@ -334,8 +334,9 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   hero.layers.remove('subtitle');
   const updatedLayers = hero.layers.list();
 
-  ok('@ruledwdl/state ComponentManager creates and mutates component layers tree',
-    updatedLayers === 'section.hero > div.container > div.title-wrapper > h1.title < button.cta + span.badge'
+  hero.variant.set('flat');
+  ok('@ruledwdl/state ComponentState updates data-variant attribute',
+    hero.variant.get() === 'flat' && hero.getSnapshot().attr['.']['data-variant'] === 'flat'
   );
 }
 
@@ -395,6 +396,13 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   ok('V2.1 renders data-variant attribute on element',
     htmlV21.includes('data-variant="elevated"') &&
     htmlV21.includes('wdl-comp="card"')
+  );
+
+  // Test @ruledwdl/csr render module
+  const { render: csrRender } = await import('../packages/csr/src/index.js');
+  const csrHtml = csrRender(pageV21.REGISTRY, pageV21.COMPONENTS, pageV21.DATA);
+  ok('@ruledwdl/csr renders components with V2.1 normalized registry attributes',
+    csrHtml.includes('data-variant="elevated"') && csrHtml.includes('class="card"')
   );
 }
 

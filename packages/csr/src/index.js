@@ -1,30 +1,54 @@
 import { parseLayers } from './layers-parser.js';
 import { toHTML } from './element-builder.js';
+import { normalizeRegistry } from './registry-compiler.js';
 
 /**
  * Pure, synchronous rendering function for components.
  */
 export function render(REG, COMPS, DAT) {
+  const { normalizedRegistry, themeCss, componentCss } = normalizeRegistry(REG || {});
+
+  // Auto-inject theme and component CSS in browser environment if head exists
+  if (typeof document !== 'undefined' && document.head) {
+    if (themeCss) {
+      let themeTag = document.querySelector('style[data-wdl="theme-tokens"]');
+      if (!themeTag) {
+        themeTag = document.createElement('style');
+        themeTag.setAttribute('data-wdl', 'theme-tokens');
+        document.head.appendChild(themeTag);
+      }
+      themeTag.textContent = themeCss;
+    }
+    if (componentCss) {
+      let compTag = document.querySelector('style[data-wdl="components"]');
+      if (!compTag) {
+        compTag = document.createElement('style');
+        compTag.setAttribute('data-wdl', 'components');
+        document.head.appendChild(compTag);
+      }
+      if (!compTag.textContent.includes(componentCss)) {
+        compTag.textContent = [compTag.textContent, componentCss].filter(Boolean).join('\n');
+      }
+    }
+  }
+
   return COMPS.map(comp => {
     if (comp._raw_html != null) return comp._raw_html;
     return parseLayers(comp.layers || 'div')
-      .map(n => toHTML(n, comp.attr || {}, DAT, REG))
+      .map(n => toHTML(n, comp.attr || {}, DAT, normalizedRegistry))
       .join('');
   }).join('');
 }
 
 /**
  * Client-side auto-mounter. 
- * Looks for any element with `data-wdl-csr` containing a JSON payload
+ * Looks for any element with `wdl-csr` attribute containing a payload ID
  * and hydrates the DOM with the compiled output.
  */
 export function hydrate(globalPayloads = null) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   
-  // Use provided payloads or fallback to a global window object
   const payloads = globalPayloads || window.WDL_CSR || {};
-  
-  // Find all elements with the custom wdl-csr attribute
   const targets = document.querySelectorAll('[wdl-csr]');
   
   targets.forEach(target => {
@@ -39,8 +63,6 @@ export function hydrate(globalPayloads = null) {
       }
       
       const { REGISTRY = {}, COMPONENTS = [], DATA = {} } = payload;
-      
-      // Render without sanitization (trusted input assumed)
       target.innerHTML = render(REGISTRY, COMPONENTS, DATA);
     } catch (err) {
       console.error('WDL CSR Error: Failed to render target.', target, err);

@@ -267,6 +267,26 @@ export class ComponentState {
         };
     }
 
+    // ---------- Variant ----------
+    get variant() {
+        const self = this;
+        return {
+            get(semanticId?: string): string | undefined {
+                const key = semanticId ? (semanticId.startsWith(".") ? semanticId : `.${semanticId}`) : ".";
+                return self._attr[key]?.["data-variant"];
+            },
+
+            set(variantName: string, semanticId?: string) {
+                const key = semanticId ? (semanticId.startsWith(".") ? semanticId : `.${semanticId}`) : ".";
+                self._attr[key] = {
+                    ...(self._attr[key] || {}),
+                    "data-variant": variantName,
+                };
+                self.emit("variant:change" as any, "set", semanticId || self.id, variantName);
+            },
+        };
+    }
+
     // ---------- Events ----------
     on(event: string, handler: EventHandler): () => void {
         return this.bus.on(event, handler);
