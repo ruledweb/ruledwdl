@@ -40,16 +40,17 @@
 ## 5. NPM Package Release & Update Workflow
 Whenever making updates to `@ruledwdl/core` and publishing a release:
 1. **Verification**: Run `npm test` to ensure all smoke and core tests pass cleanly.
-2. **Build Bundles**: Run `npm run build` to generate `dist/ruledwdl.js`, `dist/ruledwdl.min.js`, and `dist/ruledwdl.esm.js`.
+2. **Build Core Bundles**: Run `npm run build` to generate `dist/ruledwdl.js`, `dist/ruledwdl.min.js`, and `dist/ruledwdl.esm.js`.
 3. **Sync CSR**: Run `npm run sync:csr` to update `@ruledwdl/csr`.
-4. **Version Bump**: Bump the version in `package.json` using `npm version <patch|minor|major>`.
-5. **Publish**: Publish the package using `npm publish --access public`.
-6. **Git Push**: Push the commit and updated tags to the remote repository using `ruledweb` SSH access:
+4. **Build State Package**: Run `npm run build --prefix packages/state` to compile `@ruledwdl/state`.
+5. **Version Bump**: Bump versions in root `package.json`, `packages/csr/package.json`, and `packages/state/package.json`.
+6. **Git Push & Tags**: Push commit and tags to the remote repository using `ruledweb` SSH access:
    ```bash
    git push origin main --tags
    ```
 
 ---
 *Reference Documents:*
-- [ruledwdl-reference.md](file:///home/pradeep/cloudflare/workers/wdl-core/docs/ruledwdl-reference.md)
-- [architecture.html](file:///home/pradeep/cloudflare/workers/wdl-core/docs/architecture.html)
+- [RegistrySchemaV2.1.md](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/docs/registry-revamp/RegistrySchemaV2.1.md)
+- [ruledwdl-reference.md](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/docs/ruledwdl-reference.md)
+- [architecture.html](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/docs/architecture.html)

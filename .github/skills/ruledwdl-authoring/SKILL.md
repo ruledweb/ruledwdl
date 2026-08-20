@@ -15,16 +15,22 @@ For comprehensive examples and anti-patterns to prevent model hallucinations, in
 
 ---
 
-## 1. Top-Level Page & Sub-schema Specifications (v2.0)
+## 1. Top-Level Page & Sub-schema Specifications (v2.1)
 
-A complete RuledWDL page is a single JSON object with three primary sections: `REGISTRY`, `COMPONENTS`, and `DATA`. Each section follows an independent specification versioned at **`2.0`** (see [`specifications/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/README.md)).
+A complete RuledWDL page is a single JSON object with three primary sections: `REGISTRY`, `COMPONENTS`, and `DATA`. Each section follows an independent specification versioned up to **`2.1`** (see [`specifications/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/README.md)).
 
 ```json
 {
   "layout": "default",
   "fullPage": false,
   "REGISTRY": {
-    "$version": "2.0"
+    "$version": "2.1",
+    "card": {
+      "rules": [
+        { "selector": ":scope", "css": { "display": "flex", "padding": "var(--space-card)" } },
+        { "selector": "& .button", "css": { "background": "#e5e7eb" } }
+      ]
+    }
   },
   "COMPONENTS": [
     {

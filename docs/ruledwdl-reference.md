@@ -1,10 +1,7 @@
-## Independent WDL Specification Modules (v2.0)
-
-Starting with WDL Core v0.2.0, the three core primitives are independently versioned and specified:
-
-* **[`specifications/registry/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md)** — `REGISTRY` Specification (`v2.0`)
-* **[`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md)** — `COMPONENTS` Specification (`v2.0`)
-* **[`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)** — `DATA` Specification (`v2.0`)
+* **[`specifications/registry.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/specifications/registry.md)** — `REGISTRY` Specification (`v2.1`)
+* **[`docs/registry-revamp/RegistrySchemaV2.1.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/docs/registry-revamp/RegistrySchemaV2.1.md)** — `REGISTRY` Schema V2.1 Scoped CSS Reference
+* **[`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/specifications/component/v2.0.md)** — `COMPONENTS` Specification (`v2.0`)
+* **[`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl/wdl-core/specifications/data/v2.0.md)** — `DATA` Specification (`v2.0`)
 * **[`specifications/v.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/v.md)** — Specification Version Logs
 
 ## Pluggable Transformation Pipeline Hooks (v0.3.0)
