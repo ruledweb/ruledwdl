@@ -106,23 +106,3 @@ if (window.Alpine) {
   window.Alpine.initTree(container);
 }
 ```
-
----
-
-## 5. Synchronization with Core (`npm run sync:csr`)
-
-Whenever modifying core layers parsing, element building, data resolution, or state machine logic in `@ruledwdl/core`, **MUST** sync files to `@ruledwdl/csr`:
-
-```bash
-npm run sync:csr
-```
-
-This automatically syncs:
-- `layers-parser.js`
-- `data-resolver.js`
-- `token-expander.js`
-- `registry-compiler.js`
-- `element-builder.js`
-- `wdl-dom-tree.js`
-
-to `packages/csr/src/` and rebuilds `packages/csr/dist/wdl-csr.min.js`.
