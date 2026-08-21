@@ -1,4 +1,4 @@
-export { ComponentManager } from "./manager.js";
+export { ComponentManager, type ComponentInput } from "./manager.js";
 export { ComponentState } from "./state.js";
 export type {
     ComponentSnapshot,

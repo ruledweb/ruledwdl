@@ -341,7 +341,30 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
     hero.registry.get().rules.length === 1 &&
     hero.registry.get().rules[0].selector === '&:hover'
   );
+
+  // Test bulk operations (bulkCreate, loadPage, clear)
+  const bulkStates = mgr.bulkCreate([
+    { component: 'comp-1', layers: 'div.comp1' },
+    { component: 'comp-2', layers: 'div.comp2' }
+  ]);
+  ok('@ruledwdl/state ComponentManager bulkCreate registers multiple components',
+    bulkStates.length === 2 && mgr.has('comp-1') && mgr.has('comp-2')
+  );
+
+  const pageComponents = mgr.loadPage({
+    COMPONENTS: [
+      { component: 'page-comp-1', layers: 'header.top' },
+      { component: 'page-comp-2', layers: 'footer.bottom' }
+    ]
+  }, { reset: true });
+  ok('@ruledwdl/state ComponentManager loadPage with reset replaces state',
+    pageComponents.length === 2 && mgr.list().length === 2 && mgr.has('page-comp-1') && !mgr.has('hero')
+  );
+
+  mgr.clear();
+  ok('@ruledwdl/state ComponentManager clear removes all components', mgr.list().length === 0);
 }
+
 
 // 13) Registry Schema V2.1 Scoped CSS Rules (@scope), data-variant, and token resolution
 {
