@@ -1,0 +1,39 @@
+{
+  "name": "@ruledwdl/events",
+  "version": "0.1.0",
+  "description": "Pluggable DOM event adapter for RuledWDL component event handling, listener binding, and modifier parsing.",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx esbuild src/index.js --bundle --minify --outfile=dist/wdl-events.min.js --format=esm",
+    "test": "node test/events.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./src/index.js",
+    "./browser": "./dist/wdl-events.min.js"
+  },
+  "keywords": [
+    "ruledwdl",
+    "events",
+    "dom-adapter",
+    "event-listener",
+    "wdl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruledweb/ruledwdl.git"
+  },
+  "author": "Pradeep Dabane <pradeep@ruledweb.com>",
+  "license": "GPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public"
+  }
+}

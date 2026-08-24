@@ -8,12 +8,13 @@
 
 ---
 
-## Features & Recent Updates (v0.3.2)
+## Features & Recent Updates (v0.3.3)
 
 - **Host-Agnostic Engine**: Zero framework overhead — runs natively in Node.js, Cloudflare Workers, Edge runtimes, or modern browsers with **0 build tools**.
 - **Registry Schema V2.1**: Native browser **Scoped CSS Rules (`@scope`)** support via flat `rules: [{ selector, media?, css }]` arrays compiled directly into `<style data-wdl="components">`.
 - **Variant Attribute Generation**: Automatic `data-variant="..."` attribute emission and `:scope[data-variant="..."]` CSS selector mapping.
 - **Layers Component Expressions**: Ultra-lean component syntax using WDL Layers expressions (`tag.semantic_id`, `>`, `+`, `<` de-indent/subset, `<*N` repeaters, `<@N` depth reference, `*` data loops) backed by `WDLDomTree`.
+- **Pluggable Event Adapter (`@ruledwdl/events`)**: Declarative `:event.modifier` DOM event routing (`:click`, `:input`, `:submit.prevent`, `:keydown.enter`) connecting rendered component elements to JS handlers.
 - **Design Token Cascade**: Layered design and brand tokens integrated directly into WDL JSON and compiled into `<style data-wdl="theme-tokens">`, `design-tokens`, and `brand-tokens`.
 - **100% Zero-Dependency Core**: Zero external markdown runtime requirement; includes pluggable `transformData` and `transformText` hooks for external markdown engines (`marked`, `markdown-it`, `remark`).
 
@@ -39,13 +40,14 @@ npm install @ruledwdl/core
 
 ## Ecosystem Packages
 
-The RuledWDL monorepo maintains three core packages:
+The RuledWDL monorepo maintains four core packages:
 
-| Package | Workspace Folder | NPM Package | Version | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| **`@ruledwdl/core`** | [Root (`./`)](./) | [`@ruledwdl/core`](https://www.npmjs.com/package/@ruledwdl/core) | `0.3.2` | Core layout composition engine, layers parser, store interfaces, and registry compiler. |
-| **`@ruledwdl/csr`** | [`packages/csr`](packages/csr) | [`@ruledwdl/csr`](https://www.npmjs.com/package/@ruledwdl/csr) | `0.3.2` | Ultra-lightweight client-side renderer & DOM hydrator with auto-injection of `<style>` tags in `<head>`. |
-| **`@ruledwdl/state`** | [`packages/state`](packages/state) | [`@ruledwdl/state`](https://www.npmjs.com/package/@ruledwdl/state) | `0.1.2` | Headless component state manager for `layers`, `attr`, `data`, `variant`, and `registry` rules. |
+| Package | Workspace Folder | NPM Package | Version | License | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`@ruledwdl/core`** | [Root (`./`)](./) | [`@ruledwdl/core`](https://www.npmjs.com/package/@ruledwdl/core) | `0.3.3` | `AGPL-3.0-or-later` | Core layout composition engine, layers parser, store interfaces, and registry compiler. |
+| **`@ruledwdl/csr`** | [`packages/csr`](packages/csr) | [`@ruledwdl/csr`](https://www.npmjs.com/package/@ruledwdl/csr) | `0.3.3` | `AGPL-3.0-or-later` | Ultra-lightweight client-side renderer & DOM hydrator with auto-injection of `<style>` tags in `<head>`. |
+| **`@ruledwdl/state`** | [`packages/state`](packages/state) | [`@ruledwdl/state`](https://www.npmjs.com/package/@ruledwdl/state) | `0.1.3` | `AGPL-3.0-or-later` | Headless component state manager for `layers`, `attr`, `data`, `variant`, and `registry` rules. |
+| **`@ruledwdl/events`** | [`packages/events`](packages/events) | [`@ruledwdl/events`](https://www.npmjs.com/package/@ruledwdl/events) | `0.1.0` | `GPL-3.0-or-later` | Pluggable DOM event adapter for declarative `:event.modifier` binding (`:click`, `:input`, `:keydown.enter`). |
 
 ---
 
@@ -65,7 +67,7 @@ const store = createMemoryStore({
   }
 });
 
-// 2. Define a WDL Page with Schema V2.1 Scoped CSS Rules
+// 2. Define a WDL Page with Schema V2.1 Scoped CSS Rules & Event Directives
 const page = {
   title: 'Home Page',
   layout: 'base',
@@ -79,7 +81,13 @@ const page = {
     }
   },
   COMPONENTS: [
-    { layers: 'div.card > h1.title', attr: { '.title': { text: 'Welcome ${name}' } } }
+    {
+      layers: 'div.card > h1.title + button.cta',
+      attr: {
+        '.title': { text: 'Welcome ${name}' },
+        '.cta': { text: 'Click Me', ':click': 'handleClick' }
+      }
+    }
   ],
   DATA: { name: 'World' }
 };
@@ -127,5 +135,6 @@ npm test
 
 ## License & Specifications
 
-- **Code Implementation**: Licensed under [GNU Affero General Public License v3.0 (AGPL-3.0-or-later)](LICENSE).
+- **Core, CSR & State Packages**: Licensed under [GNU Affero General Public License v3.0 (AGPL-3.0-or-later)](LICENSE).
+- **Events Package**: Licensed under [GNU General Public License v3.0 or later (GPL-3.0-or-later)](packages/events/LICENSE).
 - **Language Specifications & Docs**: Licensed under [GNU General Public License v3.0 (GPL-3.0)](docs/ruledwdl-reference.md).

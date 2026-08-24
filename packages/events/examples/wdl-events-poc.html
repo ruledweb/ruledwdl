@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RuledWDL – Core + State + Events POC</title>
+  <style>
+    :root {
+      --color-primary: #0284c7;
+      --color-primary-hover: #0369a1;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem 1rem;
+      line-height: 1.5;
+    }
+    .app { max-width: 420px; margin: 0 auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.06);
+    }
+    h1.title { margin: 0 0 0.25rem; font-size: 1.4rem; }
+    p.subtitle { color: var(--muted); margin: 0 0 1.25rem; font-size: 0.9rem; }
+    div.count {
+      font-size: 3rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 0.5rem 0 1.25rem;
+      color: var(--color-primary);
+      letter-spacing: -0.02em;
+    }
+    div.row { display: flex; gap: 0.6rem; margin-bottom: 1.25rem; }
+    button.cta, button.reset {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    button.cta {
+      background: var(--color-primary);
+      color: #fff;
+    }
+    button.cta:hover { background: var(--color-primary-hover); }
+    button.cta:active { transform: scale(0.98); }
+    button.reset {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+    button.reset:hover { background: #e2e8f0; }
+    label.lbl {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+    input.search {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    input.search:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+      border-color: transparent;
+    }
+    p.status {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: center;
+      margin: 0;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    p.status strong { color: var(--text); }
+    .error {
+      background: #fef2f2;
+      color: #b91c1c;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+    }
+    .hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div id="root">
+      <p style="text-align:center;color:#64748b">Loading…</p>
+    </div>
+    <p class="hint">Open DevTools console for logs</p>
+  </div>
+
+  <!-- Real @ruledwdl/core UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@ruledwdl/core@0.3.3/dist/ruledwdl.min.js"></script>
+
+  <script>
+    // ============================================================
+    // Minimal ComponentManager (API-compatible with @ruledwdl/state)
+    // ============================================================
+    class ComponentState {
+      constructor(id, initial = {}) {
+        this.id = id;
+        this._layers = initial.layers || '';
+        this._attr = structuredClone(initial.attr || {});
+        this._data = structuredClone(initial.data || {});
+        this._variant = initial.variant || null;
+        this._listeners = {};
+      }
+      get layers() {
+        const self = this;
+        return {
+          list: () => self._layers,
+          set: (v) => { self._layers = v; self._emit('layers:change', { layers: v }); }
+        };
+      }
+      get attr() {
+        const self = this;
+        return {
+          get: (sel) => self._attr[sel] || {},
+          set: (sel, obj) => {
+            self._attr[sel] = { ...(self._attr[sel] || {}), ...obj };
+            self._emit('attr:change', { selector: sel, attr: self._attr[sel] });
+          },
+          all: () => self._attr
+        };
+      }
+      get data() {
+        const self = this;
+        return {
+          get: (path) => {
+            if (!path) return self._data;
+            return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), self._data);
+          },
+          set: (path, value) => {
+            const keys = path.split('.');
+            let obj = self._data;
+            for (let i = 0; i < keys.length - 1; i++) {
+              if (!(keys[i] in obj)) obj[keys[i]] = {};
+              obj = obj[keys[i]];
+            }
+            obj[keys[keys.length - 1]] = value;
+            self._emit('data:change', { path, value });
+          },
+          raw: () => self._data
+        };
+      }
+      get variant() {
+        const self = this;
+        return {
+          get: () => self._variant,
+          set: (v) => { self._variant = v; self._emit('variant:change', { variant: v }); }
+        };
+      }
+      on(event, fn) {
+        (this._listeners[event] ||= []).push(fn);
+        return () => { this._listeners[event] = this._listeners[event].filter(f => f !== fn); };
+      }
+      _emit(event, payload) {
+        (this._listeners[event] || []).forEach(fn => fn(payload));
+      }
+      toJSON() {
+        return {
+          layers: this._layers,
+          attr: this._attr,
+          data: this._data,
+          variant: this._variant
+        };
+      }
+    }
+
+    class ComponentManager {
+      constructor() { this._map = new Map(); }
+      create(id, initial) {
+        const c = new ComponentState(id, initial);
+        this._map.set(id, c);
+        return c;
+      }
+      get(id) { return this._map.get(id); }
+    }
+
+    // ============================================================
+    // Event Adapter – reads :click, :input, :click.prevent …
+    // ============================================================
+    function createEventAdapter({ root, component, handlers }) {
+      const cleanups = [];
+
+      function parseKey(key) {
+        if (!key.startsWith(':')) return null;
+        const parts = key.slice(1).split('.');
+        return { event: parts[0], modifiers: parts.slice(1) };
+      }
+
+      function bind() {
+        // remove previous listeners
+        while (cleanups.length) {
+          const fn = cleanups.pop();
+          try { fn(); } catch (_) {}
+        }
+
+        const attrMap = component.attr.all();
+        Object.entries(attrMap).forEach(([selector, attrs]) => {
+          const els = root.querySelectorAll(selector);
+          if (!els.length) return;
+
+          Object.entries(attrs).forEach(([key, handlerName]) => {
+            const parsed = parseKey(key);
+            if (!parsed) return;
+            const handler = handlers[handlerName];
+            if (typeof handler !== 'function') {
+              console.warn('[wdl-events] missing handler:', handlerName);
+              return;
+            }
+
+            els.forEach(el => {
+              const opts = {};
+              if (parsed.modifiers.includes('once')) opts.once = true;
+
+              const listener = (ev) => {
+                if (parsed.modifiers.includes('prevent')) ev.preventDefault();
+                if (parsed.modifiers.includes('stop')) ev.stopPropagation();
+                handler(ev, component);
+              };
+
+              el.addEventListener(parsed.event, listener, opts);
+              cleanups.push(() => el.removeEventListener(parsed.event, listener, opts));
+            });
+          });
+        });
+      }
+
+      return { bind };
+    }
+
+    // ============================================================
+    // App
+    // ============================================================
+    (async function main() {
+      const rootEl = document.getElementById('root');
+
+      if (typeof WDL === 'undefined') {
+        rootEl.innerHTML = '<div class="error">Failed to load @ruledwdl/core from CDN</div>';
+        return;
+      }
+
+      const { composePage, createMemoryStore } = WDL;
+      console.log('[POC] WDL loaded', Object.keys(WDL));
+
+      const manager = new ComponentManager();
+
+      // ---- WDL component definition ----
+      // IMPORTANT: only ONE semantic class per element (WDL rule)
+      const counter = manager.create('counter', {
+        layers: 'div.card > h1.title + p.subtitle + div.count + div.row > button.cta + button.reset < label.lbl + input.search + p.status',
+        attr: {
+          '.title':    { text: 'RuledWDL Events POC' },
+          '.subtitle': { text: 'Core + State + :event adapter' },
+          '.count':    { text: '${count}' },
+          '.cta': {
+            text: '+1',
+            type: 'button',
+            ':click': 'increment'
+          },
+          '.reset': {
+            text: 'Reset',
+            type: 'button',
+            ':click': 'reset'
+          },
+          '.lbl': { text: 'Name' },
+          '.search': {
+            type: 'text',
+            placeholder: 'Type your name…',
+            value: '${name}',
+            ':input': 'updateName'
+          },
+          '.status': { text: 'Hello, ${name} · count = ${count}' }
+        },
+        data: {
+          count: 0,
+          name: 'World'
+        }
+      });
+
+      // ---- Handlers ----
+      const handlers = {
+        increment(ev, state) {
+          const next = (state.data.get('count') || 0) + 1;
+          state.data.set('count', next);
+          console.log('[handler] increment →', next);
+        },
+        reset(ev, state) {
+          state.data.set('count', 0);
+          console.log('[handler] reset');
+        },
+        updateName(ev, state) {
+          const val = (ev.target && ev.target.value) || 'World';
+          state.data.set('name', val);
+        }
+      };
+
+      // ---- Store with a simple layout (required by composePage) ----
+      const store = createMemoryStore({
+        layouts: {
+          base: {
+            name: 'base',
+            COMPONENTS: [
+              {
+                layers: 'div.shell',
+                attr: { '.shell': { text: '{{content}}' } }
+              }
+            ],
+            DATA: {}
+          }
+        }
+      });
+
+      const adapter = createEventAdapter({
+        root: rootEl,
+        component: counter,
+        handlers
+      });
+
+      async function render() {
+        try {
+          const snap = counter.toJSON();
+
+          const page = {
+            title: 'Events POC',
+            layout: 'base',
+            COMPONENTS: [
+              {
+                layers: snap.layers,
+                attr: snap.attr
+              }
+            ],
+            DATA: {
+              ...snap.data
+            },
+            REGISTRY: {
+              $version: '2.1'
+            }
+          };
+
+          const result = await composePage(store, 'poc', page);
+          const html = result && result.html ? result.html : '';
+
+          if (!html || html.trim() === '') {
+            throw new Error('composePage returned empty HTML');
+          }
+
+          // The layout wraps content in .shell – we want the inner card
+          // so we inject the full result (or extract if needed)
+          rootEl.innerHTML = html;
+          adapter.bind();
+          console.log('[POC] rendered OK');
+        } catch (err) {
+          console.error('[POC] render error', err);
+          // Fallback simple renderer so the demo still works
+          fallbackRender();
+        }
+      }
+
+      // Very small fallback so the event demo still works even if core shape changes
+      function fallbackRender() {
+        const d = counter.data.raw();
+        rootEl.innerHTML = `
+          <div class="card">
+            <h1 class="title">RuledWDL Events POC</h1>
+            <p class="subtitle">Core + State + :event adapter (fallback render)</p>
+            <div class="count">${d.count}</div>
+            <div class="row">
+              <button class="cta" type="button">+1</button>
+              <button class="reset" type="button">Reset</button>
+            </div>
+            <label class="lbl">Name</label>
+            <input class="search" type="text" placeholder="Type your name…" value="${d.name || ''}" />
+            <p class="status">Hello, ${d.name} · count = ${d.count}</p>
+          </div>
+        `;
+        adapter.bind();
+        console.log('[POC] used fallback renderer');
+      }
+
+      // Re-render on state changes
+      counter.on('data:change', () => render());
+
+      // First paint
+      await render();
+    })();
+  </script>
+</body>
+</html>
