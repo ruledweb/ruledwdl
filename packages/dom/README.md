@@ -89,6 +89,10 @@ const dom = createWdlDom({
 });
 
 // 3. Surgical Mutations:
+// Prepend child
+hero.layers.prepend('hero', 'span.badge');
+hero.attr.set('badge', { text: 'New Release' });
+
 // Sibling insertion
 hero.layers.after('title', 'p.subtitle');
 hero.attr.set('subtitle', { text: 'Surgically injected subtitle' });
@@ -99,6 +103,12 @@ hero.attr.set('cta', { text: 'Click Here', class: 'btn-primary' });
 
 // Wrap element
 hero.layers.wrap('title', 'div.title-wrapper');
+
+// Unwrap element (hoist title back)
+hero.layers.unwrap('title-wrapper');
+
+// Move element
+hero.layers.move('cta', 'title', 'before');
 
 // Variant change (adds data-variant="elevated")
 hero.variant.set('elevated');

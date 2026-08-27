@@ -234,6 +234,49 @@ const badgeEl = dom.getLiveMap().get('badge');
 assert(badgeEl, 'Should have badge node');
 assert.strictEqual(badgeEl.tagName, 'SPAN');
 
+// Prepend top_bar into hero
+comp.emit('layers:change', {
+  type: 'layers:change',
+  action: 'prepend',
+  targetId: 'hero',
+  payload: 'div.top_bar'
+});
+const topBarEl = dom.getLiveMap().get('top_bar');
+assert(topBarEl, 'Should have prepended top_bar node');
+assert.strictEqual(liveMap.get('hero').children[0], topBarEl, 'top_bar should be first child of hero');
+
+// Wrap title in title_box
+comp.emit('layers:change', {
+  type: 'layers:change',
+  action: 'wrap',
+  targetId: 'title',
+  payload: 'div.title_box'
+});
+const titleBoxEl = dom.getLiveMap().get('title_box');
+assert(titleBoxEl, 'Should have title_box wrapper');
+assert.strictEqual(titleEl.parentNode, titleBoxEl, 'title parent should be title_box');
+
+// Unwrap title_box (hoist title back to hero)
+comp.emit('layers:change', {
+  type: 'layers:change',
+  action: 'unwrap',
+  targetId: 'title_box'
+});
+assert(!dom.getLiveMap().has('title_box'), 'title_box should be removed from liveMap');
+assert.strictEqual(titleEl.parentNode, liveMap.get('hero'), 'title parent should be hero after unwrap');
+
+// Move cta before title
+comp.emit('layers:change', {
+  type: 'layers:change',
+  action: 'move',
+  targetId: 'cta',
+  payload: { targetSemanticId: 'title', position: 'before' }
+});
+const heroChildren = liveMap.get('hero').children;
+const ctaIdx = heroChildren.indexOf(ctaEl);
+const titleIdx = heroChildren.indexOf(titleEl);
+assert(ctaIdx < titleIdx, 'cta should now be before title after move');
+
 // Remove subtitle
 comp.emit('layers:change', {
   type: 'layers:change',

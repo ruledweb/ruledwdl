@@ -107,6 +107,9 @@ hero.layers.set('section.hero > h1.title');
 // Append child layer inside parent
 hero.layers.append('container', 'button.cta');
 
+// Prepend child layer as first child
+hero.layers.prepend('container', 'span.badge');
+
 // Insert sibling before/after target semantic ID
 hero.layers.before('title', 'span.badge');
 hero.layers.after('title', 'p.subtitle');
@@ -114,10 +117,16 @@ hero.layers.after('title', 'p.subtitle');
 // Wrap target semantic ID inside wrapper layer
 hero.layers.wrap('title', 'div.title-wrapper');
 
-// Update tag or semantic ID
+// Unwrap wrapper layer (hoists children back to parent)
+hero.layers.unwrap('title-wrapper');
+
+// Move subtree before/after/inside target
+hero.layers.move('cta', 'title', 'before');
+
+// Update tag, semantic ID, or repeator
 hero.layers.update('title', { tag: 'h2', semanticId: 'main_title' });
 
-// Remove layer node
+// Remove layer node (and its descendants)
 hero.layers.remove('subtitle');
 ```
 

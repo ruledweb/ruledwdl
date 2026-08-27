@@ -352,6 +352,23 @@ export class WdlDom {
         this._log('op', `append <${token.tag}.${token.semanticId}> → #${id}`);
         break;
       }
+      case 'prepend': {
+        const parentEl = this.liveMap.get(id);
+        if (!parentEl) {
+          this._log('warn', `prepend: parent "${id}" not in liveMap — remounting`);
+          this._mount();
+          return;
+        }
+        const token = parseLayerToken(payload);
+        const el = this._createElementFromNode({
+          tag: token.tag,
+          semanticId: token.semanticId,
+          children: [],
+        });
+        parentEl.insertBefore(el, parentEl.firstChild);
+        this._log('op', `prepend <${token.tag}.${token.semanticId}> → #${id}`);
+        break;
+      }
       case 'before':
       case 'after': {
         const targetEl = this.liveMap.get(id);
@@ -391,6 +408,44 @@ export class WdlDom {
         targetEl.parentNode.insertBefore(wrapper, targetEl);
         wrapper.appendChild(targetEl);
         this._log('op', `wrap #${id} with <${token.tag}.${token.semanticId}>`);
+        break;
+      }
+      case 'unwrap': {
+        const wrapperEl = this.liveMap.get(id);
+        if (!wrapperEl || !wrapperEl.parentNode) {
+          this._log('warn', `unwrap: target "${id}" missing — remounting`);
+          this._mount();
+          return;
+        }
+        const parent = wrapperEl.parentNode;
+        while (wrapperEl.firstChild) {
+          parent.insertBefore(wrapperEl.firstChild, wrapperEl);
+        }
+        wrapperEl.remove();
+        this.liveMap.delete(id);
+        this._log('op', `unwrap #${id}`);
+        break;
+      }
+      case 'move': {
+        const sourceEl = this.liveMap.get(id);
+        const { targetSemanticId, position } = payload || {};
+        const targetId = normalizeId(targetSemanticId);
+        const targetEl = this.liveMap.get(targetId);
+
+        if (!sourceEl || !targetEl) {
+          this._log('warn', `move: source "${id}" or target "${targetId}" missing — remounting`);
+          this._mount();
+          return;
+        }
+
+        if (position === 'before') {
+          targetEl.parentNode?.insertBefore(sourceEl, targetEl);
+        } else if (position === 'after') {
+          targetEl.parentNode?.insertBefore(sourceEl, targetEl.nextSibling);
+        } else {
+          targetEl.appendChild(sourceEl);
+        }
+        this._log('op', `move #${id} -> ${position} #${targetId}`);
         break;
       }
       case 'remove': {

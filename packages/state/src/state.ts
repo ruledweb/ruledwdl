@@ -96,6 +96,22 @@ export class ComponentState {
                 self.emit("layers:change", "append", parentSemanticId, layer);
             },
 
+            prepend(parentSemanticId: string, layer: string) {
+                const tree = getTree();
+                const found = findNode(tree, parentSemanticId);
+
+                if (!found) {
+                    throw new Error(`Parent semantic id "${parentSemanticId}" not found`);
+                }
+
+                const newNode = createNode(layer);
+                if (!found.node.children) found.node.children = [];
+                found.node.children.unshift(newNode);
+
+                setTree(tree);
+                self.emit("layers:change", "prepend", parentSemanticId, layer);
+            },
+
             before(targetSemanticId: string, layer: string) {
                 const tree = getTree();
                 const found = findNode(tree, targetSemanticId);
@@ -137,9 +153,6 @@ export class ComponentState {
                 }
 
                 const wrapper = createNode(wrapperLayer);
-                // Target (and its descendants) move inside the wrapper.
-                // Following siblings stay on `list`; serializeLayers emits `<` / `<*N`
-                // on the next sibling so it de-indents to the wrapper's depth.
                 wrapper.children = [found.node];
 
                 const list = found.parent ? found.parent.children : tree;
@@ -147,6 +160,55 @@ export class ComponentState {
 
                 setTree(tree);
                 self.emit("layers:change", "wrap", targetSemanticId, wrapperLayer);
+            },
+
+            unwrap(targetSemanticId: string) {
+                const tree = getTree();
+                const found = findNode(tree, targetSemanticId);
+
+                if (!found) {
+                    throw new Error(`Target semantic id "${targetSemanticId}" not found`);
+                }
+
+                const children = found.node.children || [];
+                const list = found.parent ? found.parent.children : tree;
+                list.splice(found.index, 1, ...children);
+
+                setTree(tree);
+                self.emit("layers:change", "unwrap", targetSemanticId);
+            },
+
+            move(sourceSemanticId: string, targetSemanticId: string, position: "before" | "after" | "inside" = "inside") {
+                const tree = getTree();
+                const sourceFound = findNode(tree, sourceSemanticId);
+
+                if (!sourceFound) {
+                    throw new Error(`Source semantic id "${sourceSemanticId}" not found`);
+                }
+
+                // Remove source node from its current position
+                const sourceList = sourceFound.parent ? sourceFound.parent.children : tree;
+                const [sourceNode] = sourceList.splice(sourceFound.index, 1);
+
+                // Find target in updated tree
+                const targetFound = findNode(tree, targetSemanticId);
+                if (!targetFound) {
+                    throw new Error(`Target semantic id "${targetSemanticId}" not found`);
+                }
+
+                if (position === "before") {
+                    const targetList = targetFound.parent ? targetFound.parent.children : tree;
+                    targetList.splice(targetFound.index, 0, sourceNode);
+                } else if (position === "after") {
+                    const targetList = targetFound.parent ? targetFound.parent.children : tree;
+                    targetList.splice(targetFound.index + 1, 0, sourceNode);
+                } else {
+                    if (!targetFound.node.children) targetFound.node.children = [];
+                    targetFound.node.children.push(sourceNode);
+                }
+
+                setTree(tree);
+                self.emit("layers:change", "move", sourceSemanticId, { targetSemanticId, position });
             },
 
             remove(semanticId: string) {
@@ -164,7 +226,7 @@ export class ComponentState {
                 self.emit("layers:change", "remove", semanticId);
             },
 
-            update(semanticId: string, patch: { tag?: string; semanticId?: string }) {
+            update(semanticId: string, patch: { tag?: string; semanticId?: string; repeator?: string | null }) {
                 const tree = getTree();
                 const found = findNode(tree, semanticId);
 
@@ -174,6 +236,7 @@ export class ComponentState {
 
                 if (patch.tag) found.node.tag = patch.tag;
                 if (patch.semanticId) found.node.semanticId = patch.semanticId;
+                if (patch.repeator !== undefined) found.node.repeator = patch.repeator;
 
                 setTree(tree);
                 self.emit("layers:change", "update", semanticId, patch);

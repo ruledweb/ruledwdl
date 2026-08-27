@@ -147,6 +147,13 @@ hero.layers.append('hero', 'button.cta');
 // → parent.appendChild(el)
 ```
 
+### `prepend` — Add Child as First Child
+```javascript
+hero.layers.prepend('hero', 'span.badge');
+// → createElement('span'), class="badge", wdl-comp="badge"
+// → parent.insertBefore(el, parent.firstChild)
+```
+
 ### `before` — Insert Sibling Before Target
 ```javascript
 hero.layers.before('title', 'span.badge');
@@ -165,13 +172,25 @@ hero.layers.wrap('title', 'div.title-wrapper');
 // → Creates wrapper, inserts before target, reparents target inside wrapper
 ```
 
+### `unwrap` — Remove Wrapper and Hoist Children
+```javascript
+hero.layers.unwrap('title-wrapper');
+// → Hoists children of wrapper to parent and removes wrapper
+```
+
+### `move` — Reposition Node or Subtree
+```javascript
+hero.layers.move('cta', 'title', 'before'); // 'before' | 'after' | 'inside'
+// → Reparents and reorders subtree surgically
+```
+
 ### `remove` — Remove Node and Subtree
 ```javascript
 hero.layers.remove('subtitle');
 // → subtitleEl.remove(), liveMap removes 'subtitle' and descendant IDs
 ```
 
-### `update` — Change Tag or Semantic ID
+### `update` — Change Tag, Semantic ID, or Repeator
 ```javascript
 hero.layers.update('title', { tag: 'h2', semanticId: 'main_title' });
 // → Recreates element if tag changes, updates class and wdl-comp attribute
