@@ -17,8 +17,27 @@
 
 ## Installation
 
+### NPM Package
 ```bash
 npm install @ruledwdl/events
+```
+
+---
+
+## CDN / Browser Usage (Zero Build Step)
+
+### jsDelivr CDN
+```html
+<script type="module">
+  import { createEventAdapter, fromState, registerEvent, registerModifier } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/events/dist/wdl-events.min.js';
+</script>
+```
+
+### unpkg CDN
+```html
+<script type="module">
+  import { createEventAdapter, fromState, registerEvent, registerModifier } from 'https://unpkg.com/@ruledwdl/events/dist/wdl-events.min.js';
+</script>
 ```
 
 ---
@@ -59,4 +78,4 @@ adapter.unbind();
 
 ## License
 
-GNU General Public License v3.0 or later ([GPL-3.0-or-later](./LICENSE)).
+Licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0-or-later)](./LICENSE).

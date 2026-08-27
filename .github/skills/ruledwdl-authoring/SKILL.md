@@ -1,7 +1,7 @@
 ---
 name: ruledwdl-authoring
 description: Skill for AI agents to generate valid RuledWDL JSON (REGISTRY, COMPONENTS, DATA) to produce clean HTML markup. Trigger whenever building, editing, or authoring RuledWDL page layouts, components, or HTML structures.
-license: GPL-3.0-or-later
+license: AGPL-3.0-or-later
 metadata:
   website: ruledwdl.dev
   author: Pradeep Dabane

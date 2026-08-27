@@ -21,8 +21,27 @@ State management, DOM tree mutation, and event bus manager for RuledWDL componen
 
 ## Installation
 
+### NPM Package
 ```bash
 npm install @ruledwdl/state
+```
+
+---
+
+## CDN / Browser Usage (Zero Build Step)
+
+### jsDelivr CDN
+```html
+<script type="module">
+  import { ComponentManager, ComponentState } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/state/dist/index.js';
+</script>
+```
+
+### unpkg CDN
+```html
+<script type="module">
+  import { ComponentManager, ComponentState } from 'https://unpkg.com/@ruledwdl/state/dist/index.js';
+</script>
 ```
 
 ---

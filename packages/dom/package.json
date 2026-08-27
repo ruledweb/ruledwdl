@@ -1,12 +1,12 @@
 {
-  "name": "@ruledwdl/events",
+  "name": "@ruledwdl/dom",
   "version": "0.1.0",
-  "description": "Pluggable DOM event adapter for RuledWDL component event handling, listener binding, and modifier parsing.",
+  "description": "Native DOM runtime for @ruledwdl/state with surgical element updates driven by state events.",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "build": "npx esbuild src/index.js --bundle --minify --outfile=dist/wdl-events.min.js --format=esm",
-    "test": "node test/events.test.js",
+    "build": "npx esbuild src/index.js --bundle --minify --outfile=dist/wdl-dom.min.js --format=esm",
+    "test": "node test/dom.test.js",
     "prepublishOnly": "npm run build"
   },
   "files": [
@@ -18,13 +18,14 @@
   ],
   "exports": {
     ".": "./src/index.js",
-    "./browser": "./dist/wdl-events.min.js"
+    "./browser": "./dist/wdl-dom.min.js"
   },
   "keywords": [
     "ruledwdl",
-    "events",
-    "dom-adapter",
-    "event-listener",
+    "dom",
+    "state",
+    "mutation",
+    "runtime",
     "wdl"
   ],
   "repository": {

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wdl-dom Demo — State events + createElement</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #4ade80;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .panel h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    /* Preview area */
+    #mount {
+      min-height: 220px;
+      padding: 1rem;
+      background: #0b1220;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+    }
+    /* Component styles (what wdl would normally inject) */
+    .hero {
+      background: linear-gradient(135deg, #1e3a5f, #0f172a);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 420px;
+    }
+    .hero .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      color: #f8fafc;
+    }
+    .hero .subtitle {
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .hero .cta {
+      display: inline-block;
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .hero .cta:hover { background: var(--accent-hover); }
+    .hero .badge {
+      display: inline-block;
+      background: #334155;
+      color: var(--accent);
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+    .hero[data-variant="elevated"] {
+      box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.4);
+    }
+    /* Controls */
+    .controls { display: flex; flex-direction: column; gap: 0.6rem; }
+    button.ctrl {
+      background: #334155;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.875rem;
+      transition: background 0.15s;
+    }
+    button.ctrl:hover { background: #475569; }
+    button.ctrl.primary { background: var(--accent); color: #0f172a; font-weight: 600; }
+    button.ctrl.primary:hover { background: var(--accent-hover); }
+    button.ctrl.danger { border-color: #7f1d1d; }
+    button.ctrl.danger:hover { background: #7f1d1d; }
+    /* Log */
+    #log {
+      font-family: ui-monospace, monospace;
+      font-size: 0.75rem;
+      max-height: 180px;
+      overflow-y: auto;
+      background: #0b1220;
+      border-radius: 6px;
+      padding: 0.75rem;
+      color: var(--muted);
+    }
+    #log .entry { margin-bottom: 0.35rem; }
+    #log .op { color: var(--success); }
+    #log .warn { color: var(--danger); }
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <h1>wdl-dom Demo</h1>
+  <p class="subtitle">
+    WDL-JSON is the source of truth. State events drive surgical DOM updates via
+    <code>createElement</code> — no <code>innerHTML</code> on updates.
+  </p>
+
+  <div class="layout">
+    <!-- Live preview -->
+    <div class="panel">
+      <h2>Live DOM (mounted with createElement)</h2>
+      <div id="mount"></div>
+      <p class="hint">
+        Open DevTools → Elements. Watch that only the changed nodes are touched.
+        Focus, selection and any future event listeners on unchanged nodes stay intact.
+      </p>
+    </div>
+
+    <!-- Controls + log -->
+    <div class="panel">
+      <h2>Trigger state mutations</h2>
+      <div class="controls">
+        <button class="ctrl primary" id="btn-title">Update title text</button>
+        <button class="ctrl" id="btn-append-cta">Append CTA button</button>
+        <button class="ctrl" id="btn-badge">Insert badge before title</button>
+        <button class="ctrl" id="btn-variant">Toggle variant (elevated)</button>
+        <button class="ctrl" id="btn-subtitle">Change subtitle</button>
+        <button class="ctrl danger" id="btn-remove-cta">Remove CTA</button>
+        <button class="ctrl" id="btn-reset">Reset to initial</button>
+      </div>
+
+      <h2 style="margin-top: 1.25rem;">Operation log</h2>
+      <div id="log"></div>
+    </div>
+  </div>
+
+<script type="module">
+/**
+ * ============================================================
+ * Minimal @ruledwdl/state-like manager (for demo)
+ * In real use: import { ComponentManager } from '@ruledwdl/state'
+ * ============================================================
+ */
+class EventBus {
+  constructor() { this._listeners = new Map(); }
+  on(event, fn) {
+    if (!this._listeners.has(event)) this._listeners.set(event, new Set());
+    this._listeners.get(event).add(fn);
+    return () => this._listeners.get(event)?.delete(fn);
+  }
+  emit(event, detail) {
+    this._listeners.get(event)?.forEach(fn => fn(detail));
+  }
+}
+
+class LayersAPI {
+  constructor(owner) {
+    this._owner = owner;
+    this._layers = owner._initial.layers;
+    this._tree = this._parse(this._layers);
+  }
+  list() { return this._layers; }
+  tree() { return this._tree; }
+
+  set(layersStr) {
+    this._layers = layersStr;
+    this._tree = this._parse(layersStr);
+    this._owner._emit('layers:change', { type: 'set', layers: layersStr, tree: this._tree });
+  }
+  append(parentId, layerExpr) {
+    const node = this._parseNode(layerExpr);
+    this._findAndMutate(parentId, (n) => {
+      n.children = n.children || [];
+      n.children.push(node);
+    });
+    this._owner._emit('layers:change', { type: 'append', parentId, node });
+  }
+  before(targetId, layerExpr) {
+    const node = this._parseNode(layerExpr);
+    this._insertRelative(targetId, node, 'before');
+    this._owner._emit('layers:change', { type: 'before', targetId, node });
+  }
+  after(targetId, layerExpr) {
+    const node = this._parseNode(layerExpr);
+    this._insertRelative(targetId, node, 'after');
+    this._owner._emit('layers:change', { type: 'after', targetId, node });
+  }
+  remove(id) {
+    this._removeNode(id);
+    this._owner._emit('layers:change', { type: 'remove', id });
+  }
+  // --- very small layers parser (demo only) ---
+  _parse(str) {
+    // Supports simple: "tag.id > tag.id + tag.id"
+    const parts = str.split(/\s*>\s*/);
+    let root = null;
+    let current = null;
+    for (const part of parts) {
+      const siblings = part.split(/\s*\+\s*/).map(s => this._parseNode(s.trim()));
+      if (!root) {
+        root = siblings[0];
+        current = root;
+        for (let i = 1; i < siblings.length; i++) {
+          current.siblings = current.siblings || [];
+          current.siblings.push(siblings[i]);
+        }
+      } else {
+        current.children = siblings;
+        current = siblings[0];
+      }
+    }
+    return [root];
+  }
+  _parseNode(expr) {
+    const m = expr.match(/^([a-z0-9]+)(?:\.([a-z0-9_-]+))?$/i);
+    if (!m) throw new Error('Bad layer expr: ' + expr);
+    return { tag: m[1], id: m[2] || m[1], children: [], siblings: [] };
+  }
+  _findAndMutate(id, fn, nodes = this._tree) {
+    for (const n of nodes) {
+      if (n.id === id) { fn(n); return true; }
+      if (n.children?.length && this._findAndMutate(id, fn, n.children)) return true;
+      if (n.siblings?.length && this._findAndMutate(id, fn, n.siblings)) return true;
+    }
+    return false;
+  }
+  _insertRelative(targetId, node, where) {
+    const walk = (list) => {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === targetId) {
+          list.splice(where === 'before' ? i : i + 1, 0, node);
+          return true;
+        }
+        if (list[i].children?.length && walk(list[i].children)) return true;
+        if (list[i].siblings?.length && walk(list[i].siblings)) return true;
+      }
+      return false;
+    };
+    walk(this._tree);
+  }
+  _removeNode(id) {
+    const walk = (list) => {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === id) {
+          list.splice(i, 1);
+          return true;
+        }
+        if (list[i].children?.length && walk(list[i].children)) return true;
+        if (list[i].siblings?.length && walk(list[i].siblings)) return true;
+      }
+      return false;
+    };
+    walk(this._tree);
+  }
+}
+
+class AttrAPI {
+  constructor(owner) {
+    this._owner = owner;
+    this._attr = { ...(owner._initial.attr || {}) };
+  }
+  get(id) {
+    const key = id.startsWith('.') ? id : '.' + id;
+    return this._attr[key] || {};
+  }
+  set(id, props) {
+    const key = id.startsWith('.') ? id : '.' + id;
+    this._attr[key] = { ...(this._attr[key] || {}), ...props };
+    this._owner._emit('attr:change', { type: 'set', id: key.replace(/^\./, ''), props: this._attr[key] });
+  }
+  update(id, props) { this.set(id, props); }
+  remove(id, propKey) {
+    const key = id.startsWith('.') ? id : '.' + id;
+    if (propKey) {
+      if (this._attr[key]) delete this._attr[key][propKey];
+      this._owner._emit('attr:change', { type: 'remove-prop', id: key.replace(/^\./, ''), propKey });
+    } else {
+      delete this._attr[key];
+      this._owner._emit('attr:change', { type: 'remove', id: key.replace(/^\./, '') });
+    }
+  }
+}
+
+class ComponentInstance {
+  constructor(name, initial) {
+    this.name = name;
+    this._initial = initial;
+    this._bus = new EventBus();
+    this.layers = new LayersAPI(this);
+    this.attr = new AttrAPI(this);
+    this._variant = initial.variant || null;
+  }
+  on(event, fn) { return this._bus.on(event, fn); }
+  _emit(event, detail) { this._bus.emit(event, detail); }
+  getSnapshot() {
+    return {
+      layers: this.layers.list(),
+      attr: { ...this.attr._attr },
+      variant: this._variant
+    };
+  }
+  setVariant(v) {
+    this._variant = v;
+    this._emit('variant:change', { variant: v });
+  }
+}
+
+class ComponentManager {
+  constructor() { this._map = new Map(); }
+  create(name, initial) {
+    const inst = new ComponentInstance(name, initial);
+    this._map.set(name, inst);
+    return inst;
+  }
+  getInstance(name) { return this._map.get(name); }
+}
+
+/**
+ * ============================================================
+ * wdl-dom — native DOM runtime
+ * Mounts with createElement, keeps liveMap, applies ops surgically
+ * ============================================================
+ */
+class WdlDom {
+  /**
+   * @param {HTMLElement} container
+   * @param {ComponentInstance} component
+   */
+  constructor(container, component) {
+    this.container = container;
+    this.component = component;
+    /** @type {Map<string, HTMLElement>} */
+    this.liveMap = new Map();
+    this._unsubs = [];
+
+    this._mountInitial();
+    this._bindEvents();
+  }
+
+  // ---------- Initial mount (createElement only) ----------
+  _mountInitial() {
+    this.container.replaceChildren(); // clear once
+    this.liveMap.clear();
+
+    const tree = this.component.layers.tree();
+    for (const root of tree) {
+      const el = this._createNode(root);
+      this.container.appendChild(el);
+    }
+
+    // Apply initial attributes
+    const attr = this.component.attr._attr;
+    for (const [sel, props] of Object.entries(attr)) {
+      const id = sel.replace(/^\./, '');
+      this._applyAttr(id, props);
+    }
+
+    // Initial variant
+    if (this.component._variant) {
+      const rootId = tree[0]?.id;
+      if (rootId && this.liveMap.has(rootId)) {
+        this.liveMap.get(rootId).dataset.variant = this.component._variant;
+      }
+    }
+
+    log('mount', 'Initial tree created with createElement');
+  }
+
+  _createNode(node) {
+    const el = document.createElement(node.tag);
+    if (node.id) {
+      el.classList.add(node.id);
+      el.setAttribute('wdl-comp', node.id);
+      this.liveMap.set(node.id, el);
+    }
+
+    // children
+    if (node.children?.length) {
+      for (const child of node.children) {
+        el.appendChild(this._createNode(child));
+      }
+    }
+    // siblings (same parent level — handled by caller for root; for nested we flatten)
+    if (node.siblings?.length) {
+      // siblings are returned alongside; parent must append them
+      // For simplicity in this demo we attach them after the main node
+      // (real parser would give cleaner structure)
+    }
+    return el;
+  }
+
+  // ---------- Event wiring ----------
+  _bindEvents() {
+    const c = this.component;
+
+    this._unsubs.push(c.on('layers:change', (detail) => {
+      this._onLayersChange(detail);
+    }));
+
+    this._unsubs.push(c.on('attr:change', (detail) => {
+      this._onAttrChange(detail);
+    }));
+
+    this._unsubs.push(c.on('variant:change', (detail) => {
+      this._onVariantChange(detail);
+    }));
+  }
+
+  // ---------- Surgical appliers ----------
+  _onLayersChange(detail) {
+    const { type } = detail;
+
+    if (type === 'append') {
+      const { parentId, node } = detail;
+      const parentEl = this.liveMap.get(parentId);
+      if (!parentEl) {
+        log('warn', `append: parent "${parentId}" not in liveMap`);
+        return;
+      }
+      const el = this._createNode(node);
+      parentEl.appendChild(el);
+      log('op', `append <${node.tag}.${node.id}> inside #${parentId}`);
+      return;
+    }
+
+    if (type === 'before' || type === 'after') {
+      const { targetId, node } = detail;
+      const targetEl = this.liveMap.get(targetId);
+      if (!targetEl || !targetEl.parentNode) {
+        log('warn', `${type}: target "${targetId}" not found`);
+        return;
+      }
+      const el = this._createNode(node);
+      if (type === 'before') {
+        targetEl.parentNode.insertBefore(el, targetEl);
+      } else {
+        targetEl.parentNode.insertBefore(el, targetEl.nextSibling);
+      }
+      log('op', `${type} <${node.tag}.${node.id}> relative to #${targetId}`);
+      return;
+    }
+
+    if (type === 'remove') {
+      const { id } = detail;
+      const el = this.liveMap.get(id);
+      if (el) {
+        el.remove();
+        this.liveMap.delete(id);
+        // also clean children from map if any
+        for (const [k, v] of [...this.liveMap]) {
+          if (el.contains(v)) this.liveMap.delete(k);
+        }
+        log('op', `remove #${id}`);
+      } else {
+        log('warn', `remove: #${id} not in liveMap`);
+      }
+      return;
+    }
+
+    if (type === 'set') {
+      // Full replace of layers — rare; fall back to remount
+      log('op', 'layers.set → full remount');
+      this._mountInitial();
+    }
+  }
+
+  _onAttrChange(detail) {
+    const { type, id, props, propKey } = detail;
+
+    if (type === 'set') {
+      this._applyAttr(id, props);
+      log('op', `attr.set #${id} → ${JSON.stringify(props)}`);
+      return;
+    }
+    if (type === 'remove-prop') {
+      const el = this.liveMap.get(id);
+      if (!el) return;
+      if (propKey === 'text') el.textContent = '';
+      else if (propKey === 'class') el.className = id; // keep semantic class
+      else el.removeAttribute(propKey);
+      log('op', `attr.remove prop ${propKey} from #${id}`);
+      return;
+    }
+    if (type === 'remove') {
+      // whole entry removed — clear text etc.
+      const el = this.liveMap.get(id);
+      if (el) el.textContent = '';
+      log('op', `attr.remove entire #${id}`);
+    }
+  }
+
+  _applyAttr(id, props) {
+    const el = this.liveMap.get(id);
+    if (!el) {
+      log('warn', `attr: #${id} not in liveMap yet`);
+      return;
+    }
+    if (props.text !== undefined) el.textContent = props.text;
+    if (props.class !== undefined) {
+      // keep the semantic id class, add extra classes
+      el.className = [id, props.class].filter(Boolean).join(' ');
+    }
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'text' || k === 'class') continue;
+      if (k.startsWith('data-')) el.setAttribute(k, v);
+      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else el.setAttribute(k, v);
+    }
+  }
+
+  _onVariantChange(detail) {
+    const { variant } = detail;
+    // Apply to root
+    const tree = this.component.layers.tree();
+    const rootId = tree[0]?.id;
+    if (rootId && this.liveMap.has(rootId)) {
+      const el = this.liveMap.get(rootId);
+      if (variant) el.dataset.variant = variant;
+      else delete el.dataset.variant;
+      log('op', `variant → ${variant || '(none)'}`);
+    }
+  }
+
+  destroy() {
+    this._unsubs.forEach(u => u());
+    this.container.replaceChildren();
+    this.liveMap.clear();
+  }
+}
+
+/**
+ * ============================================================
+ * Demo bootstrap
+ * ============================================================
+ */
+function log(kind, msg) {
+  const el = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = 'entry ' + (kind === 'warn' ? 'warn' : kind === 'op' ? 'op' : '');
+  entry.textContent = `[${kind}] ${msg}`;
+  el.prepend(entry);
+}
+
+const mgr = new ComponentManager();
+
+const hero = mgr.create('hero', {
+  layers: 'section.hero > h1.title + p.subtitle',
+  attr: {
+    '.title': { text: 'Hello from wdl-dom' },
+    '.subtitle': { text: 'State events → createElement mutations' }
+  },
+  variant: null
+});
+
+const mount = document.getElementById('mount');
+const runtime = new WdlDom(mount, hero);
+
+// ---------- Control buttons ----------
+let titleCount = 1;
+document.getElementById('btn-title').onclick = () => {
+  titleCount++;
+  hero.attr.set('title', { text: `Hello from wdl-dom (#${titleCount})` });
+};
+
+document.getElementById('btn-append-cta').onclick = () => {
+  if (runtime.liveMap.has('cta')) {
+    log('warn', 'CTA already exists');
+    return;
+  }
+  // Append inside the root .hero
+  hero.layers.append('hero', 'button.cta');
+  // Set its text via attr
+  hero.attr.set('cta', { text: 'Get Started' });
+};
+
+document.getElementById('btn-badge').onclick = () => {
+  if (runtime.liveMap.has('badge')) {
+    log('warn', 'Badge already exists');
+    return;
+  }
+  hero.layers.before('title', 'span.badge');
+  hero.attr.set('badge', { text: 'New' });
+};
+
+document.getElementById('btn-variant').onclick = () => {
+  const next = hero._variant === 'elevated' ? null : 'elevated';
+  hero.setVariant(next);
+};
+
+document.getElementById('btn-subtitle').onclick = () => {
+  hero.attr.set('subtitle', {
+    text: 'Updated at ' + new Date().toLocaleTimeString()
+  });
+};
+
+document.getElementById('btn-remove-cta').onclick = () => {
+  if (!runtime.liveMap.has('cta')) {
+    log('warn', 'No CTA to remove');
+    return;
+  }
+  hero.layers.remove('cta');
+};
+
+document.getElementById('btn-reset').onclick = () => {
+  // Full reset via layers.set + attr
+  hero.layers.set('section.hero > h1.title + p.subtitle');
+  hero.attr.set('title', { text: 'Hello from wdl-dom' });
+  hero.attr.set('subtitle', { text: 'State events → createElement mutations' });
+  hero.setVariant(null);
+  // Clear any leftover badge/cta from liveMap by remount (already handled by layers.set)
+  titleCount = 1;
+  log('op', 'Reset complete');
+};
+</script>
+</body>
+</html>

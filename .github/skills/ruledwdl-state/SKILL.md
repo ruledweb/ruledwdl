@@ -1,7 +1,7 @@
 ---
 name: ruledwdl-state
 description: Skill for AI agents to manage WDL component state, DOM tree mutations, registry rules, variants, and event subscriptions using @ruledwdl/state. Trigger whenever performing state management, live component edits, layer operations, or component batch loading.
-license: GPL-3.0-or-later
+license: AGPL-3.0-or-later
 metadata:
   website: ruledwdl.dev
   author: Pradeep Dabane
@@ -15,6 +15,7 @@ metadata:
 
 ## 1. Installation & Import
 
+### NPM Package
 ```bash
 npm install @ruledwdl/state
 ```
@@ -22,6 +23,19 @@ npm install @ruledwdl/state
 ```typescript
 import { ComponentManager, ComponentState } from "@ruledwdl/state";
 import type { ComponentSnapshot, ComponentInput, ChangeEvent } from "@ruledwdl/state";
+```
+
+### Browser CDN Imports (ESM)
+```html
+<!-- jsDelivr CDN -->
+<script type="module">
+  import { ComponentManager, ComponentState } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/state/dist/index.js';
+</script>
+
+<!-- unpkg CDN -->
+<script type="module">
+  import { ComponentManager, ComponentState } from 'https://unpkg.com/@ruledwdl/state/dist/index.js';
+</script>
 ```
 
 ---

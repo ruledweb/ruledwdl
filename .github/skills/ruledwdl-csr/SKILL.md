@@ -1,7 +1,7 @@
 ---
 name: ruledwdl-csr
 description: Skill for AI agents to use @ruledwdl/csr (Client-Side Rendering) for ultra-lightweight WDL component rendering and DOM hydration in browsers and client-side applications. Trigger whenever building client-side dynamic interfaces, single-page app components, or browser DOM updates using RuledWDL.
-license: GPL-3.0-or-later
+license: AGPL-3.0-or-later
 metadata:
   website: ruledwdl.dev
   author: Pradeep Dabane
@@ -24,10 +24,16 @@ npm install @ruledwdl/csr
 import { render, parseLayers, buildEl, resolvePath } from '@ruledwdl/csr';
 ```
 
-### Browser Script Import (CDN / Direct)
+### Browser CDN Imports (ESM)
 ```html
+<!-- jsDelivr CDN -->
 <script type="module">
-  import { render } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/csr/dist/wdl-csr.min.js';
+  import { render, hydrate } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/csr/dist/wdl-csr.min.js';
+</script>
+
+<!-- unpkg CDN -->
+<script type="module">
+  import { render, hydrate } from 'https://unpkg.com/@ruledwdl/csr/dist/wdl-csr.min.js';
 </script>
 ```
 

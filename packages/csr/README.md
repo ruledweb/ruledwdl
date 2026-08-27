@@ -21,8 +21,27 @@ By stripping out full-page composition, design token cascading, script bucket ma
 
 ## Installation
 
+### NPM ESM Package
 ```bash
 npm install @ruledwdl/csr
+```
+
+---
+
+## CDN / Browser Usage (Zero Build Step)
+
+### jsDelivr CDN
+```html
+<script type="module">
+  import { render, hydrate } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/csr/dist/wdl-csr.min.js';
+</script>
+```
+
+### unpkg CDN
+```html
+<script type="module">
+  import { render, hydrate } from 'https://unpkg.com/@ruledwdl/csr/dist/wdl-csr.min.js';
+</script>
 ```
 
 ---

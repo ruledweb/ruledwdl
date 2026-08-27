@@ -35,12 +35,14 @@
 
 ## 5. NPM Package Release & Update Workflow
 Whenever making updates to `@ruledwdl/core` and publishing a release:
-1. **Verification**: Run `npm test` to ensure all smoke and core tests pass cleanly.
-2. **Build Bundles**: Run `npm run build` to generate `dist/ruledwdl.js`, `dist/ruledwdl.min.js`, and `dist/ruledwdl.esm.js`.
+1. **Verification**: Run `npm test` across all packages to ensure smoke, event, and DOM tests pass cleanly.
+2. **Build Core Bundles**: Run `npm run build` to generate `dist/ruledwdl.js`, `dist/ruledwdl.min.js`, and `dist/ruledwdl.esm.js`.
 3. **Sync CSR**: Run `npm run sync:csr` to update `@ruledwdl/csr`.
-4. **Version Bump**: Bump the version in `package.json` using `npm version <patch|minor|major>`.
-5. **Publish**: Publish the package using `npm publish --access public`.
-6. **Git Push**: Push the commit and updated tags to the remote repository using `ruledweb` SSH access:
+4. **Build State Package**: Run `npm run build --prefix packages/state` to compile `@ruledwdl/state`.
+5. **Build Events Package**: Run `npm run build --prefix packages/events` to compile `@ruledwdl/events`.
+6. **Build DOM Package**: Run `npm run build --prefix packages/dom` to compile `@ruledwdl/dom`.
+7. **Version Bump**: Bump versions in root `package.json` and `packages/*/package.json`.
+8. **Git Push & Tags**: Push commit and tags to the remote repository using `ruledweb` SSH access:
    ```bash
    git push origin main --tags
    ```

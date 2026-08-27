@@ -1,7 +1,7 @@
 ---
 name: ruledwdl-events
 description: Skill for AI agents to use @ruledwdl/events DOM event adapter for RuledWDL component event handling, listener binding, and modifier parsing. Trigger whenever binding DOM events, handling interactive component triggers, or wiring event handlers in RuledWDL.
-license: GPL-3.0-or-later
+license: AGPL-3.0-or-later
 metadata:
   website: ruledwdl.dev
   author: Pradeep Dabane
@@ -24,11 +24,16 @@ npm install @ruledwdl/events
 import { createEventAdapter, fromState, registerEvent, registerModifier } from '@ruledwdl/events';
 ```
 
-### Browser Script Import
+### Browser CDN Imports (ESM)
 ```html
-<!-- ESM -->
+<!-- jsDelivr CDN -->
 <script type="module">
-  import { createEventAdapter, fromState } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/events/dist/wdl-events.min.js';
+  import { createEventAdapter, fromState, registerEvent, registerModifier } from 'https://cdn.jsdelivr.net/npm/@ruledwdl/events/dist/wdl-events.min.js';
+</script>
+
+<!-- unpkg CDN -->
+<script type="module">
+  import { createEventAdapter, fromState, registerEvent, registerModifier } from 'https://unpkg.com/@ruledwdl/events/dist/wdl-events.min.js';
 </script>
 ```
 
