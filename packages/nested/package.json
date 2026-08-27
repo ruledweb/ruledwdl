@@ -1,0 +1,41 @@
+{
+  "name": "@ruledwdl/nested",
+  "version": "0.1.0",
+  "description": "Nested component resolver and library catalog store adapter for RuledWDL.",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx esbuild src/index.js --bundle --minify --outfile=dist/wdl-nested.min.js --format=esm",
+    "test": "node test/nested.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./src/index.js",
+    "./browser": "./dist/wdl-nested.min.js"
+  },
+  "keywords": [
+    "ruledwdl",
+    "nested",
+    "components",
+    "resolver",
+    "library",
+    "catalog",
+    "wdl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruledweb/ruledwdl.git"
+  },
+  "author": "Pradeep Dabane <pradeep@ruledweb.com>",
+  "license": "AGPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public"
+  }
+}

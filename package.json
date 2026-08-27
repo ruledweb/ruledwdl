@@ -35,7 +35,7 @@
     "build": "esbuild src/index.js --bundle --format=iife --global-name=WDL --outfile=dist/ruledwdl.js && esbuild src/index.js --bundle --format=iife --global-name=WDL --minify --outfile=dist/ruledwdl.min.js && esbuild src/index.js --bundle --format=esm --outfile=dist/ruledwdl.esm.js",
     "sync:csr": "node bin/sync-csr.js",
     "sync:skills": "node bin/sync-skills.js",
-    "test": "node test/smoke.test.js && node packages/events/test/events.test.js && node packages/dom/test/dom.test.js"
+    "test": "node test/smoke.test.js && node packages/events/test/events.test.js && node packages/dom/test/dom.test.js && node packages/nested/test/nested.test.js"
   },
 
   "keywords": [

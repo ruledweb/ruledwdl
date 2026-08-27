@@ -40,7 +40,7 @@ npm install @ruledwdl/core
 
 ## Ecosystem Packages
 
-The RuledWDL monorepo maintains five core packages:
+The RuledWDL monorepo maintains six core packages:
 
 | Package | Workspace Folder | NPM Package | Version | License | Description |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -49,6 +49,7 @@ The RuledWDL monorepo maintains five core packages:
 | **`@ruledwdl/state`** | [`packages/state`](packages/state) | [`@ruledwdl/state`](https://www.npmjs.com/package/@ruledwdl/state) | `0.1.3` | `AGPL-3.0-or-later` | Headless component state manager for `layers`, `attr`, `data`, `variant`, and `registry` rules. |
 | **`@ruledwdl/events`** | [`packages/events`](packages/events) | [`@ruledwdl/events`](https://www.npmjs.com/package/@ruledwdl/events) | `0.1.0` | `AGPL-3.0-or-later` | Pluggable DOM event adapter for declarative `:event.modifier` binding (`:click`, `:input`, `:keydown.enter`). |
 | **`@ruledwdl/dom`** | [`packages/dom`](packages/dom) | [`@ruledwdl/dom`](https://www.npmjs.com/package/@ruledwdl/dom) | `0.1.0` | `AGPL-3.0-or-later` | Native DOM runtime for `@ruledwdl/state` with surgical element updates driven by state events. |
+| **`@ruledwdl/nested`** | [`packages/nested`](packages/nested) | [`@ruledwdl/nested`](https://www.npmjs.com/package/@ruledwdl/nested) | `0.1.0` | `AGPL-3.0-or-later` | Nested component resolver and catalog store adapter for recursive `@component` layer macro expansion. |
 
 ---
 
@@ -64,6 +65,7 @@ All RuledWDL packages are compiled to standalone bundles and distributed via glo
 | **`@ruledwdl/state`** (ESM) | `https://cdn.jsdelivr.net/npm/@ruledwdl/state/dist/index.js` | `https://unpkg.com/@ruledwdl/state/dist/index.js` |
 | **`@ruledwdl/events`** (ESM) | `https://cdn.jsdelivr.net/npm/@ruledwdl/events/dist/wdl-events.min.js` | `https://unpkg.com/@ruledwdl/events/dist/wdl-events.min.js` |
 | **`@ruledwdl/dom`** (ESM) | `https://cdn.jsdelivr.net/npm/@ruledwdl/dom/dist/wdl-dom.min.js` | `https://unpkg.com/@ruledwdl/dom/dist/wdl-dom.min.js` |
+| **`@ruledwdl/nested`** (ESM) | `https://cdn.jsdelivr.net/npm/@ruledwdl/nested/dist/wdl-nested.min.js` | `https://unpkg.com/@ruledwdl/nested/dist/wdl-nested.min.js` |
 
 ### Browser ESM Import Example
 ```html
