@@ -48,6 +48,12 @@ Whenever making updates to `@ruledwdl/core` and publishing a release:
    git push origin main --tags
    ```
 
+## 6. Page Builder & Visual Playground UI Rules
+- **Non-blocking Alongside Drawers**: Drawers in visual editors / playgrounds must open side-by-side alongside the canvas preview with NO blocking dark backdrop overlays (`#drawer-backdrop`), ensuring the preview is 100% accessible, responsive, and clickable at all times.
+- **Robust Drawer Transform CSS**: Always declare `transform: translateX(100%) !important; --tw-translate-x: 100% !important;` on `#drawer` and override with `.drawer-open { transform: translateX(0) !important; --tw-translate-x: 0 !important; }` to prevent Tailwind CSS v4 variable conflicts.
+- **File Protocol (`file:///`) & Universal Standalone Execution**: All playground HTML examples and editors must function seamlessly both over HTTP/HTTPS and when opened directly via local browser file URLs (`file:///`). Provide robust inline/bundled script fallbacks so CORS origin restrictions never break rendering or event handling.
+- **Direct Layer Preview Selection**: Clicking any element directly on the canvas preview in style managers must detect its semantic ID / token and immediately select that layer in the drawer, bypassing manual dropdown selection.
+
 ---
 *Reference Documents:*
 - [ruledwdl-reference.md](file:///home/pradeep/cloudflare/workers/wdl-core/docs/ruledwdl-reference.md)
