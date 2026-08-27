@@ -53,6 +53,28 @@
       border: 1px solid rgba(56, 189, 248, 0.3);
     }
 
+    .runtime-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+
+    .runtime-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
     h1 {
       font-size: 1.85rem;
       font-weight: 800;
@@ -284,7 +306,10 @@
 <body>
   <div class="container">
     <header>
-      <div class="header-tag">@ruledwdl/dom &bull; CDN Runtime</div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span class="header-tag">@ruledwdl/dom &bull; CDN Runtime</span>
+        <span id="runtime-badge" class="runtime-badge"><span class="dot"></span><span id="runtime-label">Initializing...</span></span>
+      </div>
       <h1>Surgical DOM Refactor Engine</h1>
       <p class="subtitle">Live `@ruledwdl/state` event bus synchronized with native browser DOM updates — 0% innerHTML redraws.</p>
     </header>
@@ -366,27 +391,406 @@
 
   <!-- CDN ESM Integration Scripts -->
   <script type="module">
-    // Primary: Import via CDN
-    // Fallback: Local source for direct testing
-    let ComponentManager, createWdlDom;
+    // ---------------------------------------------------------------------------
+    // Standalone Inline Fallback Definitions
+    // (Used when running over file:/// or offline before CDN index replication)
+    // ---------------------------------------------------------------------------
+    class FallbackComponentState {
+      constructor(id, initial = {}) {
+        this.id = id;
+        this.listeners = new Map();
+        this._layers = initial.layers || '';
+        this._attr = structuredClone(initial.attr || {});
+        this._data = structuredClone(initial.data || {});
+        this._registry = structuredClone(initial.registry || null);
+        this._variant = initial.variant || null;
 
-    try {
-      const stateMod = await import('https://cdn.jsdelivr.net/npm/@ruledwdl/state/dist/index.js');
-      ComponentManager = stateMod.ComponentManager;
-    } catch (e) {
-      console.warn('CDN state load fallback to local/esm', e);
-      const stateMod = await import('../node_modules/@ruledwdl/state/dist/index.js').catch(() => null);
-      if (stateMod) ComponentManager = stateMod.ComponentManager;
+        this.layers = {
+          list: () => this._layers,
+          tree: () => parseLayersSimple(this._layers),
+          set: (expr) => {
+            this._layers = expr;
+            this.emit('layers:change', { type: 'layers:change', componentId: this.id, action: 'set', payload: expr });
+          },
+          append: (targetId, expr) => {
+            this._layers = `${this._layers} + ${expr}`;
+            this.emit('layers:change', { type: 'layers:change', componentId: this.id, action: 'append', targetId, payload: expr });
+          },
+          before: (targetId, expr) => {
+            this.emit('layers:change', { type: 'layers:change', componentId: this.id, action: 'before', targetId, payload: expr });
+          },
+          after: (targetId, expr) => {
+            this.emit('layers:change', { type: 'layers:change', componentId: this.id, action: 'after', targetId, payload: expr });
+          },
+          wrap: (targetId, expr) => {
+            this.emit('layers:change', { type: 'layers:change', componentId: this.id, action: 'wrap', targetId, payload: expr });
+          },
+          remove: (targetId) => {
+            this.emit('layers:change', { type: 'layers:change', componentId: this.id, action: 'remove', targetId });
+          }
+        };
+
+        this.attr = {
+          list: () => this._attr,
+          set: (targetId, props) => {
+            const key = targetId.startsWith('.') ? targetId : `.${targetId}`;
+            this._attr[key] = { ...(this._attr[key] || {}), ...props };
+            this.emit('attr:change', { type: 'attr:change', componentId: this.id, action: 'set', targetId, payload: props });
+          },
+          remove: (targetId, propKey) => {
+            const key = targetId.startsWith('.') ? targetId : `.${targetId}`;
+            if (propKey && this._attr[key]) delete this._attr[key][propKey];
+            else delete this._attr[key];
+            this.emit('attr:change', { type: 'attr:change', componentId: this.id, action: 'remove', targetId, payload: propKey });
+          }
+        };
+
+        this.variant = {
+          get: () => this._variant,
+          set: (name, targetId) => {
+            this._variant = name || null;
+            this.emit('variant:change', { type: 'variant:change', componentId: this.id, action: 'set', targetId, payload: name });
+          }
+        };
+
+        this.registry = {
+          get: () => this._registry,
+          addRule: (rule) => {
+            if (!this._registry) this._registry = { $version: '2.1', rules: [] };
+            if (!Array.isArray(this._registry.rules)) this._registry.rules = [];
+            this._registry.rules.push(rule);
+            this.emit('registry:change', { type: 'registry:change', componentId: this.id, action: 'addRule', payload: rule });
+          }
+        };
+      }
+
+      on(type, handler) {
+        if (!this.listeners.has(type)) this.listeners.set(type, []);
+        this.listeners.get(type).push(handler);
+        return () => this.off(type, handler);
+      }
+
+      off(type, handler) {
+        const list = this.listeners.get(type) || [];
+        const idx = list.indexOf(handler);
+        if (idx !== -1) list.splice(idx, 1);
+      }
+
+      emit(type, event) {
+        event.timestamp = Date.now();
+        const list = this.listeners.get(type) || [];
+        list.forEach((fn) => {
+          try { fn(event); } catch (err) { console.error(err); }
+        });
+      }
+
+      getSnapshot() {
+        return {
+          id: this.id,
+          layers: this._layers,
+          attr: this._attr,
+          data: this._data,
+          registry: this._registry,
+          variant: this._variant
+        };
+      }
     }
 
-    try {
-      const domMod = await import('../src/index.js');
-      createWdlDom = domMod.createWdlDom;
-    } catch (e) {
-      console.warn('Local dom load fallback to dist', e);
-      const domMod = await import('../dist/wdl-dom.min.js');
-      createWdlDom = domMod.createWdlDom;
+    class FallbackComponentManager {
+      constructor() {
+        this.components = new Map();
+      }
+      create(id, initial) {
+        const state = new FallbackComponentState(id, initial);
+        this.components.set(id, state);
+        return state;
+      }
+      get(id) { return this.components.get(id); }
+      has(id) { return this.components.has(id); }
     }
+
+    // Helpers
+    const ATTR_SKIP = new Set(['text', 'class', 'html']);
+    function normalizeId(id) { return id == null ? '' : String(id).replace(/^\./, ''); }
+    function parseLayerToken(expr) {
+      if (typeof expr !== 'string') {
+        if (expr && typeof expr === 'object') {
+          return { tag: String(expr.tag || 'div').toLowerCase(), semanticId: normalizeId(expr.semanticId || expr.id || '') };
+        }
+        throw new Error('[wdl-dom] invalid layer expression');
+      }
+      const trimmed = expr.trim();
+      const m = trimmed.match(/^([a-zA-Z][a-zA-Z0-9_-]*)(?:\.([a-zA-Z0-9_-]+))?$/);
+      if (!m) return { tag: trimmed.toLowerCase() || 'div', semanticId: '' };
+      return { tag: m[1].toLowerCase(), semanticId: normalizeId(m[2] || '') };
+    }
+
+    function parseLayersSimple(str) {
+      if (Array.isArray(str)) return structuredClone(str);
+      if (typeof str !== 'string' || !str.trim()) return [];
+      const root = { tag: '__root__', semanticId: '', children: [] };
+      const stack = [root];
+      let i = 0;
+      const top = () => stack[stack.length - 1];
+      while (i < str.length) {
+        const ch = str[i];
+        if (/\s/.test(ch)) { i++; continue; }
+        if (ch === '>') {
+          const last = top().children[top().children.length - 1];
+          if (last) stack.push(last);
+          i++;
+          continue;
+        }
+        if (ch === '+') { i++; continue; }
+        if (ch === '<') {
+          i++;
+          if (stack.length > 1) stack.pop();
+          continue;
+        }
+        let tag = '';
+        while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) tag += str[i++];
+        let semanticId = '';
+        if (str[i] === '.') {
+          i++;
+          while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) semanticId += str[i++];
+        }
+        top().children.push({ tag: tag.toLowerCase() || 'div', semanticId, children: [] });
+      }
+      return root.children;
+    }
+
+    class FallbackWdlDom {
+      constructor(options = {}) {
+        const { container, component, styleTarget = document.head, debug = false } = options;
+        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        this.component = component;
+        this.styleTarget = styleTarget;
+        this.debug = debug;
+        this.liveMap = new Map();
+        this._unsubs = [];
+        this._styleEl = null;
+        this._mount();
+        this._bindStateEvents();
+      }
+
+      remount() { this._mount(); }
+      getLiveMap() { return new Map(this.liveMap); }
+      destroy() {
+        this._unsubs.forEach((u) => { try { u(); } catch (_) {} });
+        this._unsubs = [];
+        this.container.replaceChildren();
+        this.liveMap.clear();
+        if (this._styleEl?.parentNode) this._styleEl.parentNode.removeChild(this._styleEl);
+        this._styleEl = null;
+      }
+
+      _mount() {
+        this.container.replaceChildren();
+        this.liveMap.clear();
+        const tree = typeof this.component.layers?.tree === 'function'
+          ? this.component.layers.tree()
+          : parseLayersSimple(this.component.layers?.list?.() ?? this.component.getSnapshot?.()?.layers);
+        for (const node of tree) {
+          this.container.appendChild(this._createElementFromNode(node));
+        }
+        const attrMap = this.component.attr?.list?.() ?? this.component.getSnapshot?.()?.attr ?? {};
+        for (const [sel, props] of Object.entries(attrMap)) {
+          this._applyAttrs(normalizeId(sel), props);
+        }
+        this._applyRootVariant();
+        this._syncRegistryStyles();
+      }
+
+      _createElementFromNode(node) {
+        const tag = (node.tag || 'div').toLowerCase();
+        const id = normalizeId(node.semanticId || node.id || '');
+        const el = document.createElement(tag);
+        if (id) {
+          el.classList.add(id);
+          el.setAttribute('wdl-comp', id);
+          this.liveMap.set(id, el);
+        }
+        if (Array.isArray(node.children)) {
+          for (const child of node.children) el.appendChild(this._createElementFromNode(child));
+        }
+        return el;
+      }
+
+      _bindStateEvents() {
+        const c = this.component;
+        if (typeof c.on !== 'function') return;
+        const handler = (e) => this._onStateEvent(e);
+        ['layers:change', 'attr:change', 'data:change', 'variant:change', 'registry:change'].forEach(t => {
+          const off = c.on(t, handler);
+          if (typeof off === 'function') this._unsubs.push(off);
+          else this._unsubs.push(() => c.off?.(t, handler));
+        });
+      }
+
+      _onStateEvent(event) {
+        if (!event?.type) return;
+        switch (event.type) {
+          case 'layers:change': this._handleLayers(event); break;
+          case 'attr:change': this._handleAttr(event); break;
+          case 'variant:change': this._handleVariant(event); break;
+          case 'registry:change': this._handleRegistry(event); break;
+        }
+      }
+
+      _handleLayers(event) {
+        const { action, targetId, payload } = event;
+        const id = normalizeId(targetId);
+        switch (action) {
+          case 'set': this._mount(); break;
+          case 'append': {
+            const parent = this.liveMap.get(id);
+            if (!parent) return this._mount();
+            const token = parseLayerToken(payload);
+            const el = this._createElementFromNode({ tag: token.tag, semanticId: token.semanticId, children: [] });
+            parent.appendChild(el);
+            break;
+          }
+          case 'before':
+          case 'after': {
+            const target = this.liveMap.get(id);
+            if (!target?.parentNode) return this._mount();
+            const token = parseLayerToken(payload);
+            const el = this._createElementFromNode({ tag: token.tag, semanticId: token.semanticId, children: [] });
+            if (action === 'before') target.parentNode.insertBefore(el, target);
+            else target.parentNode.insertBefore(el, target.nextSibling);
+            break;
+          }
+          case 'wrap': {
+            const target = this.liveMap.get(id);
+            if (!target?.parentNode) return this._mount();
+            const token = parseLayerToken(payload);
+            const wrapper = this._createElementFromNode({ tag: token.tag, semanticId: token.semanticId, children: [] });
+            target.parentNode.insertBefore(wrapper, target);
+            wrapper.appendChild(target);
+            break;
+          }
+          case 'remove': {
+            const el = this.liveMap.get(id);
+            if (!el) return;
+            for (const [sid, node] of [...this.liveMap]) {
+              if (sid !== id && el.contains(node)) this.liveMap.delete(sid);
+            }
+            el.remove();
+            this.liveMap.delete(id);
+            break;
+          }
+          default: this._mount();
+        }
+      }
+
+      _handleAttr(event) {
+        const { action, targetId, payload } = event;
+        const id = normalizeId(targetId);
+        if (action === 'set' || action === 'update') {
+          this._applyAttrs(id, payload || {});
+        } else if (action === 'remove') {
+          const el = this.liveMap.get(id);
+          if (!el) return;
+          if (!payload) { el.textContent = ''; el.className = id; }
+          else if (payload === 'text') el.textContent = '';
+          else if (payload === 'class') el.className = id;
+          else el.removeAttribute(payload);
+        }
+      }
+
+      _applyAttrs(id, props) {
+        if (!props || typeof props !== 'object') return;
+        const el = this.liveMap.get(id);
+        if (!el) return;
+        if (props.text !== undefined) el.textContent = String(props.text);
+        if (props.class !== undefined) {
+          const extra = String(props.class).trim();
+          el.className = extra ? `${id} ${extra}` : id;
+        }
+        for (const [k, v] of Object.entries(props)) {
+          if (ATTR_SKIP.has(k)) continue;
+          if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+          else if (v == null) el.removeAttribute(k);
+          else el.setAttribute(k, String(v));
+        }
+      }
+
+      _handleVariant(event) {
+        const id = normalizeId(event.targetId) || this._rootSemanticId();
+        const el = this.liveMap.get(id);
+        if (el) {
+          if (event.payload) el.dataset.variant = String(event.payload);
+          else delete el.dataset.variant;
+        }
+      }
+
+      _applyRootVariant() {
+        const rootId = this._rootSemanticId();
+        if (!rootId) return;
+        const variant = this.component.variant?.get?.() || this.component.getSnapshot?.()?.variant;
+        if (variant && this.liveMap.has(rootId)) {
+          this.liveMap.get(rootId).dataset.variant = String(variant);
+        }
+      }
+
+      _rootSemanticId() {
+        for (const [id, el] of this.liveMap) {
+          if (el.parentNode === this.container) return id;
+        }
+        const first = this.liveMap.keys().next();
+        return first.done ? '' : first.value;
+      }
+
+      _handleRegistry() { this._syncRegistryStyles(); }
+
+      _syncRegistryStyles() {
+        if (!this.styleTarget) return;
+        const registry = this.component.registry?.get?.() || this.component.getSnapshot?.()?.registry;
+        const componentId = this.component.id || 'comp';
+        if (!this._styleEl) {
+          this._styleEl = document.createElement('style');
+          this._styleEl.setAttribute('data-wdl-dom', componentId);
+          this.styleTarget.appendChild(this._styleEl);
+        }
+        if (!registry?.rules) { this._styleEl.textContent = ''; return; }
+        const parts = registry.rules.map(rule => {
+          const css = typeof rule.css === 'string' ? rule.css : Object.entries(rule.css || {}).map(([k, v]) => `${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}: ${v};`).join(' ');
+          const sel = rule.selector.startsWith('&') ? rule.selector.replace('&', `[wdl-comp="${componentId}"]`) : rule.selector;
+          return `${sel} { ${css} }`;
+        });
+        this._styleEl.textContent = parts.join('\n');
+      }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Runtime Loader: CDN Primary with Graceful Standalone Fallback
+    // ---------------------------------------------------------------------------
+    let ComponentManager = FallbackComponentManager;
+    let createWdlDom = (opts) => new FallbackWdlDom(opts);
+    let runtimeSource = 'Standalone Engine (Local / file:// mode)';
+
+    // Try CDN dynamically if online and supported
+    try {
+      if (window.location.protocol.startsWith('http') || navigator.onLine) {
+        const statePromise = import('https://cdn.jsdelivr.net/npm/@ruledwdl/state@0.1.3/dist/index.js');
+        const domPromise = import('https://cdn.jsdelivr.net/npm/@ruledwdl/dom/dist/wdl-dom.min.js').catch(() => null);
+
+        const [stateMod, domMod] = await Promise.allSettled([statePromise, domPromise]);
+        if (stateMod.status === 'fulfilled' && stateMod.value?.ComponentManager) {
+          ComponentManager = stateMod.value.ComponentManager;
+          runtimeSource = 'CDN (jsDelivr: @ruledwdl/state)';
+        }
+        if (domMod.status === 'fulfilled' && domMod.value?.createWdlDom) {
+          createWdlDom = domMod.value.createWdlDom;
+          runtimeSource = 'CDN (jsDelivr: @ruledwdl/state + @ruledwdl/dom)';
+        }
+      }
+    } catch (err) {
+      console.log('Using standalone inline runtime fallback:', err);
+    }
+
+    const badgeEl = document.getElementById('runtime-label');
+    if (badgeEl) badgeEl.textContent = runtimeSource;
 
     // Logging helper
     const logContainer = document.getElementById('event-log');
@@ -418,7 +822,9 @@
     // Display Updater
     function updateLayersDisplay() {
       const display = document.getElementById('layers-display');
-      display.textContent = `Layers Expression:\n"${hero.layers.list()}"\n\nLive Map Registered Semantic IDs:\n[ ${Array.from(domRuntime.getLiveMap().keys()).map(k => `"${k}"`).join(', ')} ]`;
+      const listExpr = typeof hero.layers?.list === 'function' ? hero.layers.list() : hero.getSnapshot().layers;
+      const liveKeys = Array.from(domRuntime.getLiveMap().keys()).map(k => `"${k}"`).join(', ');
+      display.textContent = `Layers Expression:\n"${listExpr}"\n\nLive Map Registered Semantic IDs:\n[ ${liveKeys} ]`;
     }
 
     updateLayersDisplay();
