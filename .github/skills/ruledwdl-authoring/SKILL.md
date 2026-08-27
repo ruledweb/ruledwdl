@@ -1,118 +1,199 @@
 ---
 name: ruledwdl-authoring
-description: Skill for AI agents to generate valid RuledWDL JSON (REGISTRY, COMPONENTS, DATA) to produce clean HTML markup. Trigger whenever building, editing, or authoring RuledWDL page layouts, components, or HTML structures.
+description: Skill for AI agents to generate valid RuledWDL JSON (REGISTRY, COMPONENTS, DATA, DATA_SCHEMA) and use @ruledwdl/core APIs to produce clean HTML markup. Trigger whenever building, editing, or authoring RuledWDL page layouts, components, stores, or HTML structures.
 license: AGPL-3.0-or-later
 metadata:
   website: ruledwdl.dev
   author: Pradeep Dabane
 ---
 
-# RuledWDL Authoring Guide for AI Agents
+# RuledWDL Authoring & Core API Guide
 
-RuledWDL is a declarative JSON specification that turns structured WDL JSON into clean HTML markup. This skill teaches AI agents how to generate 100% valid RuledWDL JSON objects.
+RuledWDL is a declarative JSON specification and host-agnostic layout runtime that compiles structured WDL JSON (`REGISTRY`, `COMPONENTS`, `DATA`, `DATA_SCHEMA`) directly into optimized HTML.
 
-For comprehensive examples and anti-patterns to prevent model hallucinations, inspect [references/examples.md](file:///home/pradeep/cloudflare/workers/wdl-core/.github/skills/ruledwdl-authoring/references/examples.md).
+For full landing page blueprints and anti-pattern pairs, inspect [references/examples.md](file:///home/pradeep/cloudflare/workers/wdl-core/.github/skills/ruledwdl-authoring/references/examples.md).
 
 ---
 
 ## 1. Top-Level Page & Sub-schema Specifications (v2.1)
 
-A complete RuledWDL page is a single JSON object with three primary sections: `REGISTRY`, `COMPONENTS`, and `DATA`. Each section follows an independent specification versioned up to **`2.1`** (see [`specifications/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/README.md)).
+A complete RuledWDL page is a JSON object composed of four key sections: `REGISTRY` (v2.1), `COMPONENTS` (v2.0), `DATA` (v2.0), and `DATA_SCHEMA` (JSON Schema Draft-07):
 
 ```json
 {
   "layout": "default",
   "fullPage": false,
+  "title": "Product Overview",
   "REGISTRY": {
     "$version": "2.1",
     "card": {
       "rules": [
         { "selector": ":scope", "css": { "display": "flex", "padding": "var(--space-card)" } },
-        { "selector": "& .button", "css": { "background": "#e5e7eb" } }
-      ]
+        { "selector": "& .button", "css": { "background": "var(--color-primary)" } }
+      ],
+      "vars": {
+        "space-card": "1.5rem",
+        "color-primary": "#0284c7"
+      }
     }
   },
   "COMPONENTS": [
     {
       "$version": "2.0",
-      "layers": "section.hero>h1.title"
+      "layers": "section.hero > h1.title + p.subtitle + a.cta_btn",
+      "attr": {
+        ".title": { "text": "${heading}" },
+        ".subtitle": { "text": "${subheading}" },
+        ".cta_btn": { "text": "Get Started", "href": "/signup" }
+      }
     }
   ],
   "DATA": {
-    "$version": "2.0"
+    "$version": "2.0",
+    "heading": "Ship High-Performance Web Apps",
+    "subheading": "Declarative JSON to clean HTML with zero framework overhead."
+  },
+  "DATA_SCHEMA": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "PageDataProps",
+    "properties": {
+      "heading": { "type": "string" },
+      "subheading": { "type": "string" }
+    },
+    "required": ["heading"]
   }
 }
 ```
 
-- **`REGISTRY`** ([`specifications/registry/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md)): Map of component tokens, base attributes, `__tokens__`, and `script_deps` (v2.0).
-- **`COMPONENTS`** ([`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md)): Ordered array of visual layer definitions or component references (v2.0).
-- **`DATA`** ([`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)): State object containing dynamic variables, loop arrays, head elements, and CSS design tokens (v2.0).
+- **`REGISTRY`** ([`specifications/registry/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md)): Map of component tokens, base attributes, Scoped CSS `@scope` rules, and CSS variables.
+- **`COMPONENTS`** ([`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md)): Ordered array of visual layer definitions or component references.
+- **`DATA`** ([`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)): State object containing dynamic variables, loop arrays, head elements, and CSS design tokens.
+- **`DATA_SCHEMA`**: Standard JSON Schema (Draft-07) defining the typing contract and property validation for `DATA`.
 - **`layout`** *(optional)*: Name of the layout wrapper to extend.
-- **`fullPage`** *(optional)*: Boolean. Set `true` only if the layout outputs a complete `<html>` document. If `false` (default), the renderer automatically wraps output with UTF-8, viewport, title, and Tailwind CSS.
-
-> **Pre-v0.2.0 Compatibility Notice**:  
-> Applications, page authors, and CMS backends targeting WDL core versions prior to 0.2.0 MUST explicitly specify/maintain schema versions at their end to ensure backward compatibility routing.
+- **`fullPage`** *(optional)*: Boolean. If `false` (default), the renderer wraps the output with UTF-8, viewport, title, and Tailwind CSS.
 
 ---
 
-## 2. COMPONENTS Structure
+## 2. `@ruledwdl/core` Programmatic Engine APIs
 
-`COMPONENTS` is an array containing two entry types:
+### `composePage(store, tenant, page, options)`
+Composes a full WDL page with layout wrappers, design token cascading, script bucket management, and component resolution:
 
-### A. Layers Form (Direct DOM Tree)
-```json
-{
-  "layers": "section>div.hero>h1.title+p.subtitle+button.cta_btn",
-  "attr": {
-    ".title": { "text": "${heading}" },
-    ".subtitle": { "text": "${subheading}" },
-    ".cta_btn": { "text": "Get Started", "type": "button" }
+```javascript
+import { composePage, createMemoryStore } from '@ruledwdl/core';
+
+const store = createMemoryStore({
+  layouts: {
+    default: {
+      name: 'default',
+      COMPONENTS: [{ layers: 'div.shell', attr: { '.shell': { text: '{{content}}' } } }],
+      DATA: { __design_tokens: ':root { --color-primary: #0284c7; }' }
+    }
   }
-}
+});
+
+const { html, dynamic, tokens, versions, script_deps } = await composePage(store, 'tenant-id', pageDef, {
+  resolveComponent: async (store, project, block) => null, // Optional component macro resolver hook
+  transformData: (data) => data,                           // Pre-process data state
+  transformText: (text, node) => text                      // Pluggable markdown parser (e.g. marked)
+});
 ```
 
-### B. Component Reference Form
-```json
-{
-  "component": "card",
-  "data_overrides": {
-    "title": "Custom Card Title"
-  },
-  "style_overrides": {
-    ".card": { "class": "bg-gray-100 p-6 rounded-lg" }
-  }
-}
+### `renderAll(REGISTRY, COMPONENTS, DATA, options)`
+Synchronous, standalone renderer that maps components directly into an HTML fragment without layout stores:
+
+```javascript
+import { renderAll } from '@ruledwdl/core';
+
+const html = renderAll(REGISTRY, COMPONENTS, DATA);
 ```
 
-> **Note on Overrides:**
-> - `data_overrides`: Merged **page-wide** into the `DATA` object (visible to all components).
-> - `style_overrides`: Shallow-merged per selector key onto the resolved `attr` object. A selector key present in `style_overrides` fully replaces that selector's `attr` entry.
+### `createMemoryStore(initialData)` & `createFileStore(rootDir)`
+Initializes in-memory or filesystem-backed WDL stores conforming to the Store contract (`getLayout`, `getComponent`, `getScript`, `getComponentRegistry`, `getDoc`):
+
+```javascript
+import { createMemoryStore, createFileStore } from '@ruledwdl/core';
+
+// In-Memory Store
+const memStore = createMemoryStore({
+  layouts: { ... },
+  components: { ... }
+});
+
+// File System Store (Node.js environments)
+const fileStore = createFileStore('/path/to/wdl/project');
+```
+
+### `WDLDomTree` (AST State Machine)
+Low-level tree state machine supporting 5-element tuple arrays (`[depth, operator, tag, semantic_id, repeator]`), AST mutations, and serialization:
+
+```javascript
+import { WDLDomTree } from '@ruledwdl/core';
+
+// Ingest from layers string or 5-element tuple array
+const tree = new WDLDomTree('section.hero > h1.title + p.subtitle');
+
+// Sibling and child mutations
+tree.wrap('title', 'div.title_wrapper');
+tree.append('hero', 'button.cta');
+
+// Serialize back to WDL layers string
+console.log(tree.toString()); // 'section.hero>div.title_wrapper>h1.title<p.subtitle+button.cta'
+```
 
 ---
 
 ## 3. WDL Layers Grammar & Scoping Rules
 
-The `layers` string defines the DOM hierarchy using a compact selector syntax.
+The `layers` string defines the visual DOM hierarchy using a compact selector syntax.
 
 ### Syntax Rules
 - **Element Node Format**: Must strictly be `tag.semantic_id` (e.g. `div.hero`, `h1.title`, `button.submit`).
-- **Default Tag**: `.card` evaluates to `div.card`.
-- **Operators**:
+- **Default Tag**: Bare `.card` evaluates to `div.card`.
+- **Supported Operators**:
   - `>` : Descend to child scope (`>` binds tighter than `+`).
   - `+` : Add sibling at current scope level.
   - `<` : De-indent 1 parent scope level (`<<` climbs 2 levels).
   - `<*N` : De-indent repeater ($N$ levels, e.g. `<*3` $\equiv$ `<<<`).
   - `<@N` : De-indent to absolute depth level $N$ (where depth 0 = root layer elements).
   - `*N` : Static numeric multiplier (`li.item*3`).
-  - `*key` or `*key.path` : Data array loop (`li.post_item*posts`).
+  - `*key` or `*nested.path` : Data array loop (`div.card*features`).
 - **Automatic Attributes**:
   - Every rendered element automatically receives `wdl-comp="{semantic-id}"` (`{semantic-id}` is the class name or tag fallback, overrideable in `attr`).
 
-### Scoping & Authoring Format Examples
+### Operator Examples
+
+#### 1. Child (`>`) & Sibling (`+`)
+```
+section.hero > h1.title + p.subtitle + button.cta
+```
+
+#### 2. Scope Climb (`<`, `<<`, `<*N`, `<@N`)
+```
+// '<' climbs 1 level: banner is sibling of container inside header
+header > div.container > h1.title + p.sub < div.banner
+
+// '<<' climbs 2 levels: footer is sibling of main inside shell
+div.shell > main > div.content > p.text << footer.site_footer
+
+// '<*3' repeats de-indent 3 levels
+div.level0 > div.level1 > div.level2 > div.level3 > p.leaf <*3 div.sibling_of_level1
+
+// '<@0' jumps back to absolute root depth (depth 0)
+section.section1 > div.container > h2.title <@0 section.section2 > div.container > h2.title
+```
+
+#### 3. Data Loop (`*loopKey`)
+```
+ul.list > li.item*posts > h3.post_title + p.post_excerpt
+```
+
+### Authoring Formats
 
 #### Format 1: Single String Expression
 ```
-header>div.container>h1.title+p.sub<div.banner
+header > div.container > h1.title + p.sub < div.banner
 ```
 
 #### Format 2: Flat String Array (Clean, Zero Indent Whitespace Burden)
@@ -146,24 +227,33 @@ header>div.container>h1.title+p.sub<div.banner
 
 ---
 
-## 4. REGISTRY (Style Tokens)
+## 4. REGISTRY (Schema v2.1 Scoped CSS & Tokens)
 
-The `REGISTRY` maps bare class names to default attribute objects.
+The `REGISTRY` maps semantic component IDs to default attributes, Scoped CSS rules, and variables:
 
 ```json
 "REGISTRY": {
-  "site-header": {
-    "class": "bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between"
-  },
-  "btn-primary": {
-    "class": "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition"
+  "$version": "2.1",
+  "card": {
+    "class": "bg-white rounded-xl shadow-md transition hover:shadow-lg",
+    "rules": [
+      { "selector": ":scope", "css": { "padding": "var(--space-card)", "display": "flex", "flex-direction": "column" } },
+      { "selector": "&:hover .title", "css": { "color": "var(--color-primary)" } },
+      { "selector": "& .badge", "media": "(max-width: 640px)", "css": { "display": "none" } }
+    ],
+    "vars": {
+      "space-card": "1.5rem",
+      "color-primary": "#0284c7"
+    }
   }
 }
 ```
 
-### Registry Key Rules
-- Keys MUST be bare class names (e.g. `"site-header"` or `"btn-primary"`).
-- **FORBIDDEN**: `"header.site-header"` (tag+class) or `"header"` (bare tag) — these will never match or will be ignored.
+### Registry Features
+- **Scoped CSS Rules (`@scope`)**: Compiled directly into `<style data-wdl="components">` using native CSS `@scope (tag.semantic_id)`.
+- **`:scope`**: Refers to the component root element.
+- **`& .child`**: Refers to descendants inside the component boundary.
+- **`vars`**: Emits scoped CSS custom properties `--var-name: value`.
 
 ---
 
@@ -173,38 +263,32 @@ The `attr` object maps element selectors to HTML attributes.
 
 ### Match Precedence Order
 1. **First Matching Class Selector**: `attr[".classname"]` (**ALWAYS PREFERRED**).
-2. **Tag Fallback**: `attr["tagname"]` (applies to ALL elements of that tag).
+2. **Tag Fallback**: `attr["tagname"]` (applies to all elements of that tag).
 
 ```json
 "attr": {
-  ".project_title": { "text": "${title}" },
-  ".css_link": { "rel": "stylesheet", "href": "/main.css" }
+  ".title": { "text": "${title}" },
+  ".link": { "href": "${url}", "target": "_blank", "rel": "noopener" },
+  ".avatar": { "src": "${user.avatar}", "alt": "${user.name}", "loading": "lazy" }
 }
 ```
 
-> **CRITICAL**: Never use combined selectors like `"h1.project_title"` in `attr`. Combined keys fail matching and result in unstyled elements with empty text.
-
-### Any HTML Attribute Supported
-Every key in an `attr` entry (except special keys) passes directly through to HTML attributes: `href`, `src`, `id`, `type`, `placeholder`, `required`, `disabled`, `data-*`, `aria-*`, `style`, `tabindex`, etc.
+> **CRITICAL**: Never use combined selectors like `"h1.title"` in `attr`. Always use bare `".title"`.
 
 ### Special Attr Keys
 - **`class`**: CSS class string, merged with layers class and matching `REGISTRY` entries.
 - **`attr-ref`**: String key of a `REGISTRY` entry to inherit base attributes from.
 - **`text`**: Inner content rendered as **inline Markdown** (escaped HTML) or raw text for `<script>`/`<style>`.
-- **`alpine`**: Object containing Alpine.js directives flattened onto the element (`x-data`, `@click`, `x-show`, `x-init`, etc.).
-- **`htmx`**: Object containing `hx-*` directives.
+- **`html`**: Raw unsanitized HTML (use only when explicitly intended).
+- **`alpine`**: Object containing Alpine.js directives (`{ "x-data": "...", "@click": "..." }`).
+- **`htmx`**: Object containing HTMx directives (`{ "hx-get": "/api", "hx-target": "#app" }`).
+- **`:event.modifier`**: Declarative DOM event bindings (`{ ":click": "save", ":submit.prevent": "handleSubmit" }`).
 
 ### Inline Markdown Rules for `text`
-`text` supports inline Markdown formatting:
-- `**bold**` -> `<strong>bold</strong>`
-- `*italic*` / `_italic_` -> `<em>italic</em>`
-- `` `code` `` -> `<code>code</code>`
-- `[link text](url)` -> `<a href="url">link text</a>`
-
-**Markdown Restrictions:**
-- **Inline only**: Leading `#`, `-`, `>`, or `1.` stay literal text (do not create headings/lists/blockquotes; use layers structure instead).
-- Safe by construction: Raw HTML tags inside `text` are escaped (`<script>` will not execute).
-- Generated Markdown tags carry no classes (style them via parent container class).
+- `**bold**` $\to$ `<strong>bold</strong>`
+- `*italic*` $\to$ `<em>italic</em>`
+- `` `code` `` $\to$ `<code>code</code>`
+- `[link text](url)` $\to$ `<a href="url">link text</a>`
 
 ---
 
@@ -215,17 +299,16 @@ Every key in an `attr` entry (except special keys) passes directly through to HT
 - `${nested.path}`: Binds object property paths.
 
 ### Loop Arrays (`*loopKey`)
-When repeating elements via `*loopKey` in layers (e.g. `li.item*items`):
 - **MUST be an array of objects**: `[{"label": "Alpha"}, {"label": "Beta"}]`.
-- **FORBIDDEN**: Arrays of primitive strings `["Alpha", "Beta"]` (causes empty string binding). Wrap strings as `[{"item": "Alpha"}, {"item": "Beta"}]` and use `${item}`.
-- **Direct Variable Access**: Inside the loop body, bind properties directly as `${label}` (NOT `${items.label}`).
-- **Index**: Use `${_index}` for zero-based position.
+- **FORBIDDEN**: Arrays of primitive strings `["Alpha", "Beta"]`.
+- **Direct Variable Access**: Inside the loop body, bind properties directly as `${label}`.
+- **Index**: Use `${_index}` for zero-based loop index.
 
 ```json
 {
   "COMPONENTS": [
     {
-      "layers": "ul.nav_list>li.nav_item*menuItems",
+      "layers": "ul.nav_list > li.nav_item*menuItems",
       "attr": {
         ".nav_item": {
           "text": "${label}",
@@ -248,9 +331,8 @@ When repeating elements via `*loopKey` in layers (e.g. `li.item*items`):
 
 ## 7. DATA_SCHEMA (JSON Schema Draft-07 Standard)
 
-Every reusable component definition and page state model can specify a **`DATA_SCHEMA`** complying with standard **JSON Schema (Draft-07)**. This establishes a strict typing contract for data bindings (`${variable}`), enables automated UI form generation in visual builders, and supports TypeScript interface generation:
+Every reusable component definition and page state model can specify a **`DATA_SCHEMA`** complying with standard **JSON Schema (Draft-07)**:
 
-### Component Definition Contract Example
 ```json
 {
   "id": "feature-card",
@@ -265,7 +347,7 @@ Every reusable component definition and page state model can specify a **`DATA_S
     },
     "COMPONENTS": [
       {
-        "layers": "div.card>span.badge+h3.title+p.desc+a.link",
+        "layers": "div.card > span.badge + h3.title + p.desc + a.link",
         "attr": {
           ".badge": { "text": "${badge}" },
           ".title": { "text": "${title}" },
@@ -310,33 +392,16 @@ Every reusable component definition and page state model can specify a **`DATA_S
 
 | Reserved Key | Type | Description |
 | :--- | :--- | :--- |
-| **`__seo`** | Object | SEO meta tags (`title`, `description`, `canonical`, etc.). |
+| **`__seo`** | Object | SEO meta tags (`title`, `description`, `canonical`, `og:*`, etc.). |
 | **`__head`** | Array | Raw `<head>` tags (e.g. `<link rel="icon">`, preconnects, theme-color). |
-| **`__design_tokens`** | String \| Array | Layered CSS custom properties (e.g. Tailwind v4 `@theme` / `:root` declarations). |
-| **`__brand_tokens`** | String \| Array | Final-priority CSS custom properties (always overrides `__design_tokens`). |
-
-### Head and Design Tokens Example
-```json
-"DATA": {
-  "__seo": {
-    "title": "Product Documentation",
-    "description": "Comprehensive guide to RuledWDL architecture."
-  },
-  "__head": [
-    "<link rel=\"icon\" href=\"/favicon.ico\">",
-    "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"
-  ],
-  "__design_tokens": ":root { --color-primary: #3b82f6; --radius: 0.5rem; }",
-  "__brand_tokens": ":root { --color-primary: #1d4ed8; }"
-}
-```
+| **`__design_tokens`** | String \| Array | Layered base CSS custom properties (e.g. Tailwind v4 `@theme` / `:root` declarations). |
+| **`__brand_tokens`** | String \| Array | Brand override CSS custom properties (always overrides `__design_tokens`). |
 
 ---
 
-## 8. Alpine.js & Script Dependency Rules
+## 9. Alpine.js & Script Dependency Rules
 
 To use frontend interactivity with Alpine.js:
-
 1. Declare script dependencies on the component (`script_deps`).
 2. Attach directives in `attr[".selector"].alpine`.
 
@@ -344,43 +409,38 @@ To use frontend interactivity with Alpine.js:
 {
   "COMPONENTS": [
     {
-      "layers": "div.dropdown>button.toggle+div.menu",
+      "layers": "div.dropdown > button.toggle + div.menu",
       "attr": {
         ".dropdown": { "alpine": { "x-data": "{ open: false }" } },
         ".toggle":   { "alpine": { "@click": "open = !open" }, "text": "Menu" },
         ".menu":     { "alpine": { "x-show": "open", "@click.outside": "open = false" }, "text": "Content" }
       },
-      "script_deps": ["alpine-cdn"]
+      "script_deps": ["store-ui", "alpine-cdn"]
     }
   ]
 }
 ```
 
-### Script Ordering Rule for Cross-Component Stores
-When registering custom Alpine stores across separate components:
-- Register the inline store script **BEFORE** `"alpine-cdn"` in `script_deps`:
-
-```json
-"script_deps": ["store-ui", "alpine-cdn"]
-```
-
-> **Warning**: Listing `"alpine-cdn"` before custom store scripts will cause `$store` to fail silently without errors.
+> **Script Ordering Rule**: When registering shared stores across separate components, always list the store script **BEFORE** `"alpine-cdn"` in `script_deps` so `alpine:init` fires in order.
 
 ---
 
-## 9. Pre-Flight Automated Validation Script
+## 10. CLI Usage
+
+```bash
+# Render a page to stdout
+npx ruledwdl render <project-dir> <slug>
+
+# Run live preview server
+npx ruledwdl serve [project-dir] [port]
+```
+
+---
+
+## 11. Pre-Flight Automated Validation Script
 
 AI agents **MUST** run the bundled validation script to verify generated WDL JSON before completing authoring tasks:
 
 ```bash
 node .github/skills/ruledwdl-authoring/scripts/validate-wdl.js <path-to-json-file>
 ```
-
-The script automatically verifies:
-1. Valid JSON object structure.
-2. WDL Layers syntax rules & single `semantic_id` constraint via `parseLayers`.
-3. Bare class name format for `REGISTRY` keys (no `tag.class` keys).
-4. `attr` selector formatting (no combined `tag.class` keys).
-5. Array of objects rule for `DATA` loop arrays (no primitive strings).
-6. Complete document compilation via `@ruledwdl/core` engine.
-
