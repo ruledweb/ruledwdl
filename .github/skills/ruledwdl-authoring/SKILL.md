@@ -246,7 +246,67 @@ When repeating elements via `*loopKey` in layers (e.g. `li.item*items`):
 
 ---
 
-## 7. Reserved DATA Keys
+## 7. DATA_SCHEMA (JSON Schema Draft-07 Standard)
+
+Every reusable component definition and page state model can specify a **`DATA_SCHEMA`** complying with standard **JSON Schema (Draft-07)**. This establishes a strict typing contract for data bindings (`${variable}`), enables automated UI form generation in visual builders, and supports TypeScript interface generation:
+
+### Component Definition Contract Example
+```json
+{
+  "id": "feature-card",
+  "definition": {
+    "REGISTRY": {
+      "$version": "2.1",
+      "card": {
+        "rules": [
+          { "selector": ":scope", "css": { "padding": "1.5rem", "border-radius": "0.75rem" } }
+        ]
+      }
+    },
+    "COMPONENTS": [
+      {
+        "layers": "div.card>span.badge+h3.title+p.desc+a.link",
+        "attr": {
+          ".badge": { "text": "${badge}" },
+          ".title": { "text": "${title}" },
+          ".desc": { "text": "${description}" },
+          ".link": { "text": "${cta.label}", "href": "${cta.url}" }
+        }
+      }
+    ],
+    "DATA": {
+      "badge": "New",
+      "title": "Edge Runtime",
+      "description": "Blazing fast SSR and CSR with zero dependencies.",
+      "cta": { "label": "Learn More", "url": "/docs" }
+    },
+    "DATA_SCHEMA": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "title": "FeatureCardProps",
+      "description": "Schema contract for feature card component properties",
+      "properties": {
+        "badge": { "type": "string", "description": "Top badge text" },
+        "title": { "type": "string", "description": "Card main headline" },
+        "description": { "type": "string", "description": "Card body paragraph" },
+        "cta": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "url": { "type": "string", "format": "uri-reference" }
+          },
+          "required": ["label", "url"]
+        }
+      },
+      "required": ["title", "description"]
+    }
+  }
+}
+```
+
+---
+
+## 8. Reserved DATA Keys
 
 | Reserved Key | Type | Description |
 | :--- | :--- | :--- |

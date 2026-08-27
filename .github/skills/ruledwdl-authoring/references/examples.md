@@ -78,6 +78,37 @@ A production-ready WDL JSON page showing `REGISTRY`, `COMPONENTS`, `DATA`, `__se
       "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"
     ],
     "__design_tokens": ":root { --brand-accent: #4f46e5; }"
+  },
+  "DATA_SCHEMA": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "LandingPageData",
+    "properties": {
+      "heroTitle": { "type": "string" },
+      "navLinks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "href": { "type": "string", "format": "uri-reference" }
+          },
+          "required": ["label", "href"]
+        }
+      },
+      "features": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" }
+          },
+          "required": ["title", "description"]
+        }
+      }
+    },
+    "required": ["heroTitle", "navLinks", "features"]
   }
 }
 ```

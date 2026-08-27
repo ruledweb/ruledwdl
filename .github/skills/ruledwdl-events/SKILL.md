@@ -21,7 +21,14 @@ npm install @ruledwdl/events
 ```
 
 ```javascript
-import { createEventAdapter, fromState, registerEvent, registerModifier } from '@ruledwdl/events';
+import {
+  createEventAdapter,
+  fromState,
+  registerEvent,
+  registerModifier,
+  listEvents,
+  listModifiers
+} from '@ruledwdl/events';
 ```
 
 ### Browser CDN Imports (ESM)
@@ -56,7 +63,7 @@ import { createEventAdapter, fromState, registerEvent, registerModifier } from '
 | `.self` | Only fires if `event.target === element` |
 | `.window` | Attaches listener to `window` |
 | `.document` | Attaches listener to `document` |
-| `.enter` / `.escape` / etc. | Key filter for `keydown` / `keyup` events |
+| `.enter` / `.escape` / `.tab` / `.space` / `.up` / `.down` / `.left` / `.right` | Key filter for keyboard events |
 
 ---
 
@@ -65,18 +72,31 @@ import { createEventAdapter, fromState, registerEvent, registerModifier } from '
 ### `createEventAdapter(options)`
 ```javascript
 const adapter = createEventAdapter({
-  root,        // ParentNode to scan (default: document)
-  handlers,    // { [handlerName]: (event, state, ctx) => void }
-  getState,    // (el) => stateInstance (optional)
-  state,       // fixed state instance (optional)
-  attrPrefix,  // default ':'
-  query,       // custom (selector, root) => Element[]
-  debug        // boolean console logging
+  root: document.getElementById('app'), // ParentNode to scan (default: document)
+  handlers: {
+    saveItem(event, state, ctx) {
+      console.log('Saved', state?.data?.get('itemName'));
+    },
+    updateQuery(event, state, ctx) {
+      state?.data?.set('query', event.target.value);
+    }
+  },
+  getState: (el) => componentStateInstance, // Function returning component state
+  state: fixedStateInstance,                // Fixed state instance (optional)
+  attrPrefix: ':',                          // Default ':'
+  debug: false                              // Enable console logging
 });
 
-adapter.bind(attrMap); // Attach event listeners
-adapter.unbind();      // Remove event listeners
-adapter.rebind();      // Unbind + Bind
+// Bind event listeners using component attributes map
+adapter.bind({
+  '.cta': { ':click': 'saveItem', ':click.once': 'trackClick' },
+  '.search': { ':input': 'updateQuery', ':keydown.enter': 'runSearch' }
+});
+
+// Adapter instance properties & methods
+console.log(adapter.size); // Number of active event bindings
+adapter.rebind();          // Unbind + re-scan and bind
+adapter.unbind();          // Clean up all DOM event listeners
 ```
 
 ### `fromState({ root, state, handlers, debug })`
@@ -84,27 +104,53 @@ Shorthand utility for binding directly to a `@ruledwdl/state` (or compatible) co
 
 ---
 
-## 4. WDL Component Declarative Syntax
+## 4. Declarative Component Definition with DATA_SCHEMA
 
-In WDL JSON / component definitions, add event bindings using `:event` keys in `attr`:
+In WDL JSON / component definitions, declare event directives alongside `DATA` and `DATA_SCHEMA`:
 
 ```json
 {
-  "layers": "button.cta + input.search + form.login",
-  "attr": {
-    ".cta": {
-      "text": "Save",
-      ":click": "saveItem",
-      ":click.once": "trackClick"
+  "id": "search-form",
+  "definition": {
+    "REGISTRY": {
+      "$version": "2.1",
+      "search_box": { "rules": [{ "selector": ":scope", "css": { "display": "flex" } }] }
     },
-    ".search": {
-      "type": "text",
-      ":input": "updateQuery",
-      ":keydown.enter": "runSearch"
+    "COMPONENTS": [
+      {
+        "layers": "form.search_box > input.search_input + button.search_btn",
+        "attr": {
+          ".search_box": {
+            ":submit.prevent": "handleSubmit"
+          },
+          ".search_input": {
+            "type": "text",
+            "placeholder": "${placeholder}",
+            "value": "${query}",
+            ":input": "updateQuery",
+            ":keydown.enter": "handleSubmit"
+          },
+          ".search_btn": {
+            "type": "submit",
+            "text": "Search",
+            ":click": "trackSearchClick"
+          }
+        }
+      }
+    ],
+    "DATA": {
+      "query": "",
+      "placeholder": "Search articles..."
     },
-    ".login": {
-      "action": "#",
-      ":submit.prevent": "handleSubmit"
+    "DATA_SCHEMA": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "title": "SearchFormData",
+      "properties": {
+        "query": { "type": "string", "description": "Current search query string" },
+        "placeholder": { "type": "string", "description": "Input placeholder text" }
+      },
+      "required": ["placeholder"]
     }
   }
 }
@@ -124,6 +170,8 @@ function handler(event, state, ctx) {
 ## 5. Extensions (Custom Events & Modifiers)
 
 ```javascript
+import { registerEvent, registerModifier, listEvents, listModifiers } from '@ruledwdl/events';
+
 // Register a custom event name
 registerEvent('swipedleft');
 
@@ -131,4 +179,8 @@ registerEvent('swipedleft');
 registerModifier('outside', (event, el) => {
   return !el.contains(event.target);
 });
+
+// Inspect registry
+console.log(listEvents());     // Includes 'swipedleft'
+console.log(listModifiers());  // Includes 'outside'
 ```

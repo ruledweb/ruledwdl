@@ -48,19 +48,28 @@ import type { ComponentSnapshot, ComponentInput, ChangeEvent } from "@ruledwdl/s
 ```typescript
 const mgr = new ComponentManager();
 
-// Create a component state instance
+// Create a component state instance with DATA and DATA_SCHEMA
 const heroState = mgr.create('hero', {
   layers: 'section.hero > div.container > h1.title + p.subtitle',
-  attr: { '.title': { text: 'Welcome' } },
-  data: { theme: 'dark' }
+  attr: { '.title': { text: '${title}' }, '.subtitle': { text: '${subtitle}' } },
+  data: { title: 'Welcome to RuledWDL', subtitle: 'Stateful UI components' },
+  data_schema: {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "subtitle": { "type": "string" }
+    },
+    "required": ["title"]
+  }
 });
 
 // Check & retrieve
-mgr.has('hero');                   // true
-const snapshot = mgr.get('hero');   // Read-only ComponentSnapshot
-const liveState = mgr.getInstance('hero'); // Mutable ComponentState instance
-mgr.list();                        // ['hero']
-mgr.remove('hero');                // true
+mgr.has('hero');                           // true
+const snapshot = mgr.get('hero');           // Read-only ComponentSnapshot
+const liveState = mgr.getInstance('hero');  // Mutable ComponentState instance
+mgr.list();                                // ['hero']
+mgr.remove('hero');                        // true
 ```
 
 ### Bulk Operations & Page State Loading
@@ -115,7 +124,7 @@ hero.layers.remove('subtitle');
 ### B. Attribute Operations (`.attr`)
 ```typescript
 // Get attributes for semantic ID
-hero.attr.get('title'); // { text: 'Welcome' }
+hero.attr.get('title'); // { text: '${title}' }
 
 // Set or update attributes
 hero.attr.set('title', { text: 'New Title', class: 'text-2xl font-bold' });
@@ -178,9 +187,17 @@ hero.on('layers:change', (event: ChangeEvent) => {
   console.log(`Action: ${event.action}, Target: ${event.targetId}`);
 });
 
+hero.on('attr:change', (event: ChangeEvent) => {
+  console.log(`Attr updated on: ${event.targetId}`);
+});
+
 hero.on('data:change', (event: ChangeEvent) => {
   console.log(`Data modified at path: ${event.targetId}`);
 });
+
+// Unsubscribe
+const unsub = hero.on('variant:change', (event) => { ... });
+unsub(); // or hero.off('variant:change', handler)
 
 // Manager level change events
 mgr.on('change', (event: ChangeEvent) => {
@@ -190,16 +207,24 @@ mgr.on('change', (event: ChangeEvent) => {
 
 ---
 
-## 5. Exporting Snapshots for Rendering
+## 5. Exporting Snapshots with Schema
 
 To render a `ComponentState` with `@ruledwdl/core` or `@ruledwdl/csr`:
 
 ```typescript
 const snapshot = hero.getSnapshot();
 
-// Snapshot is a standard WDL Component entry:
-// { id: 'hero', layers: '...', attr: {...}, data: {...}, registry: {...} }
-
-// Pass snapshots array to renderer:
-const html = renderAll(REGISTRY, [snapshot], DATA);
+// Snapshot is a complete WDL Component payload:
+// {
+//   id: 'hero',
+//   layers: 'section.hero > h1.title',
+//   attr: { '.title': { text: 'Welcome' } },
+//   data: { title: 'Welcome' },
+//   data_schema: {
+//     "$schema": "http://json-schema.org/draft-07/schema#",
+//     "type": "object",
+//     "properties": { "title": { "type": "string" } },
+//     "required": ["title"]
+//   }
+// }
 ```

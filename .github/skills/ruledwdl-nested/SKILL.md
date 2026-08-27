@@ -22,7 +22,14 @@ npm install @ruledwdl/nested @ruledwdl/core
 
 ```javascript
 import { composePage } from '@ruledwdl/core';
-import { createNestedResolver, createLibraryStore, normalizeRegistry, mergeRegistries } from '@ruledwdl/nested';
+import {
+  createNestedResolver,
+  createLibraryStore,
+  normalizeRegistry,
+  mergeRegistries,
+  parseLayersToAst,
+  serializeAst
+} from '@ruledwdl/nested';
 ```
 
 ### Browser CDN Imports (ESM)
@@ -41,13 +48,13 @@ import { createNestedResolver, createLibraryStore, normalizeRegistry, mergeRegis
 
 ---
 
-## 2. Quick Start
+## 2. Quick Start with DATA & DATA_SCHEMA
 
 ```javascript
 import { composePage } from '@ruledwdl/core';
 import { createNestedResolver, createLibraryStore } from '@ruledwdl/nested';
 
-// 1. Initialize a library store with component definitions
+// 1. Initialize a library store with component definitions containing JSON Schemas
 const store = createLibraryStore({
   library: [
     {
@@ -57,6 +64,16 @@ const store = createLibraryStore({
         attr: {
           '.value': { text: '${value}' },
           '.label': { text: '${label}' }
+        },
+        DATA: { value: '0', label: 'Metric' },
+        DATA_SCHEMA: {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "value": { "type": "string" },
+            "label": { "type": "string" }
+          },
+          "required": ["value", "label"]
         }
       }
     },
@@ -67,6 +84,16 @@ const store = createLibraryStore({
         attr: {
           '.title': { text: '${title}' },
           '.subtitle': { text: '${subtitle}' }
+        },
+        DATA: { title: 'Welcome', subtitle: 'Headline description' },
+        DATA_SCHEMA: {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "subtitle": { "type": "string" }
+          },
+          "required": ["title"]
         }
       }
     }
@@ -91,6 +118,26 @@ const page = {
       { value: '15+', label: 'Components' },
       { value: '< 2ms', label: 'Edge Render' }
     ]
+  },
+  DATA_SCHEMA: {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "subtitle": { "type": "string" },
+      "stats": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "string" },
+            "label": { "type": "string" }
+          },
+          "required": ["value", "label"]
+        }
+      }
+    },
+    "required": ["title", "stats"]
   }
 };
 
@@ -121,12 +168,25 @@ Creates a WDL Store backed by a catalog or array of components:
 - `layouts` (`object`): Map of layout definitions `{ [layoutId]: layoutDef }`.
 - `scripts` (`object`): Map of script strings `{ [scriptId]: scriptContent }`.
 - `baseStore` (`object`): Optional fallback store.
+- Store instance methods:
+  - `store.getComponent(project, id)`: Returns component definition.
+  - `store.getLayout(project, name)`: Returns layout definition.
+  - `store.getScript(project, id)`: Returns script content.
+  - `store.getComponentRegistry(project)`: Compiles composite `REGISTRY` across all catalog components.
+  - `store.listComponents()`: Lists registered component IDs.
+  - `store.registerComponent(id, def)`: Dynamically registers or overrides a component in memory.
 
 ### `normalizeRegistry(registry)`
 Normalizes Schema v2.0 (`base` / `class`) and Schema v2.1 (`rules` / `vars`) into a standard object representation.
 
 ### `mergeRegistries(target, source)`
 Deep-merges two component registries, combining utility classes, Scoped CSS rules, and design tokens.
+
+### `parseLayersToAst(layersStr)`
+Parses a WDL layers string into an AST tree with tag, classes, loopKey, and children.
+
+### `serializeAst(astNodes)`
+Serializes an AST tree back into a standard WDL layers expression.
 
 ---
 

@@ -44,19 +44,33 @@ import { createWdlDom, WdlDom } from '@ruledwdl/dom';
 
 ---
 
-## 2. Quick Start
+## 2. Quick Start with DATA & DATA_SCHEMA
 
 ```javascript
 import { ComponentManager } from '@ruledwdl/state';
 import { createWdlDom } from '@ruledwdl/dom';
 
-// 1. Create component state instance
+// 1. Create component state instance with JSON Schema contract
 const mgr = new ComponentManager();
 const hero = mgr.create('hero', {
   layers: 'section.hero > h1.title + p.subtitle',
   attr: {
-    '.title': { text: 'Hello' },
-    '.subtitle': { text: 'World' }
+    '.title': { text: '${title}' },
+    '.subtitle': { text: '${subtitle}' }
+  },
+  data: {
+    title: 'Hello RuledWDL',
+    subtitle: 'Surgical real-time DOM runtime'
+  },
+  data_schema: {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "HeroProps",
+    "properties": {
+      "title": { "type": "string" },
+      "subtitle": { "type": "string" }
+    },
+    "required": ["title"]
   }
 });
 
@@ -70,6 +84,7 @@ const dom = createWdlDom({
 // 3. Mutate state → DOM updates surgically in real-time
 hero.attr.set('title', { text: 'Updated Title' });
 hero.layers.append('hero', 'button.cta');
+hero.attr.set('cta', { text: 'Explore Now', class: 'btn-primary' });
 hero.variant.set('elevated');
 
 // 4. Teardown / Cleanup
@@ -240,3 +255,4 @@ hero.registry.addRule({
    - `@ruledwdl/dom`: Real-time surgical DOM updater.
    - `@ruledwdl/csr`: Static/SSR HTML string generator.
    - `@ruledwdl/events`: Declarative event binding adapter.
+   - `@ruledwdl/nested`: Nested component macro resolver.
