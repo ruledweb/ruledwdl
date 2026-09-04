@@ -484,5 +484,96 @@ hookComp.emit('data:change', {
 assert.strictEqual(customHookCalled, true, 'onDataBind extension hook should be invoked');
 assert.strictEqual(customPath, 'count', 'onDataBind received targetId path');
 
+// ---------------------------------------------------------------------------
+// Test 11: REGISTRY Utility Class Merging on Mount
+// ---------------------------------------------------------------------------
+const regContainer = new MockElement('div');
+const regComp = new MockComponentState('styled-card', {
+  layers: 'div.card > h2.title + p.desc',
+  attr: {
+    '.title': { text: 'Card Title', class: 'font-bold' },
+    '.desc': { text: 'Card Description' }
+  },
+  registry: {
+    card: {
+      base: 'p-6 bg-white rounded-xl shadow-md',
+      variants: {
+        dark: 'bg-slate-900 text-white',
+        highlight: 'border-2 border-indigo-500'
+      },
+      states: {
+        hover: 'shadow-lg'
+      },
+      breakpoints: {
+        md: 'p-8'
+      }
+    },
+    title: {
+      base: 'text-2xl text-slate-800'
+    },
+    desc: 'text-sm text-slate-500'
+  }
+});
+
+const regDom = createWdlDom({
+  container: regContainer,
+  component: regComp
+});
+
+const regCardEl = regDom.getNode('card');
+const regTitleEl = regDom.getNode('title');
+const regDescEl = regDom.getNode('desc');
+
+assert.ok(regCardEl.className.includes('card'), 'Card element should include semantic id class');
+assert.ok(regCardEl.className.includes('p-6'), 'Card element should include registry base class');
+assert.ok(regCardEl.className.includes('bg-white'), 'Card element should include registry base class');
+assert.ok(regCardEl.className.includes('hover:shadow-lg'), 'Card element should include registry state class');
+assert.ok(regCardEl.className.includes('md:p-8'), 'Card element should include registry breakpoint class');
+
+assert.ok(regTitleEl.className.includes('title'), 'Title element should include semantic id class');
+assert.ok(regTitleEl.className.includes('text-2xl'), 'Title element should include registry base class');
+assert.ok(regTitleEl.className.includes('font-bold'), 'Title element should include attr class');
+
+assert.ok(regDescEl.className.includes('desc'), 'Desc element should include semantic id class');
+assert.ok(regDescEl.className.includes('text-sm'), 'Desc element should include registry string shorthand');
+
+// ---------------------------------------------------------------------------
+// Test 12: Dynamic variant:change Updates Live Element Classes
+// ---------------------------------------------------------------------------
+regComp.emit('variant:change', {
+  type: 'variant:change',
+  targetId: 'card',
+  payload: 'dark'
+});
+
+assert.strictEqual(regCardEl.dataset.variant, 'dark', 'Card dataset variant should be updated');
+assert.ok(regCardEl.className.includes('bg-slate-900'), 'Card element should include dark variant class');
+assert.ok(regCardEl.className.includes('text-white'), 'Card element should include dark variant text class');
+
+// Switch variant to highlight
+regComp.emit('variant:change', {
+  type: 'variant:change',
+  targetId: 'card',
+  payload: 'highlight'
+});
+assert.ok(regCardEl.className.includes('border-indigo-500'), 'Card element should include highlight variant class');
+assert.ok(!regCardEl.className.includes('bg-slate-900'), 'Card element should no longer have dark variant class');
+
+// ---------------------------------------------------------------------------
+// Test 13: Dynamic registry:change Updates Live Element Classes
+// ---------------------------------------------------------------------------
+regComp.snapshot.registry.card.base = 'p-10 bg-gray-100 rounded-2xl';
+regComp.emit('registry:change', {
+  type: 'registry:change',
+  action: 'update',
+  targetId: 'card',
+  payload: regComp.snapshot.registry
+});
+
+assert.ok(regCardEl.className.includes('p-10'), 'Card element should update to new registry base class');
+assert.ok(regCardEl.className.includes('bg-gray-100'), 'Card element should update to new registry background class');
+assert.ok(!regCardEl.className.includes('p-6'), 'Card element should remove old base class');
+
 console.log('PASS — @ruledwdl/dom unit tests passed cleanly!');
+
 

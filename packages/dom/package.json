@@ -1,6 +1,6 @@
 {
   "name": "@ruledwdl/dom",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Native DOM runtime for @ruledwdl/state with surgical element updates driven by state events.",
   "main": "src/index.js",
   "type": "module",

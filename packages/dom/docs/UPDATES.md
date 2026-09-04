@@ -4,6 +4,17 @@ All notable changes, architectural updates, and version releases for `@ruledwdl/
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-09-04
+
+### Added
+- **Component REGISTRY Utility Class Resolution**:
+  - Automatically resolves and merges `component.registry` classes onto live DOM element `className` attributes alongside `semanticId` and `attr.class`.
+  - Supports `REGISTRY[semanticId].base`, `REGISTRY[semanticId].class`, string shorthand, `variants`, `states` (e.g. `hover:shadow-lg`), and `breakpoints` (e.g. `md:p-8`).
+  - Evaluates data scopes for tokenized values inside registry class strings.
+- **Dynamic Live Class Reactivity**:
+  - `registry:change`: Automatically re-evaluates and updates `className` across all live DOM elements.
+  - `variant:change`: Dynamically applies the target variant's utility classes and removes old variant classes from live elements in real-time.
+
 ---
 
 ## [0.1.1] — 2026-09-04

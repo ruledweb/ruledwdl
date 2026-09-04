@@ -387,6 +387,87 @@ export class WdlDom {
     );
   }
 
+  _getComponentRegistry() {
+    return (
+      this.component.registry?.get?.() ??
+      this.component.getSnapshot?.()?.registry ??
+      {}
+    );
+  }
+
+  _getRegistryClasses(id, tag, dataScope, el) {
+    const registry = this._getComponentRegistry();
+    if (!registry || typeof registry !== 'object') return '';
+
+    const entry =
+      (id ? registry[id] || registry['.' + id] : null) ||
+      (tag ? registry[tag] : null);
+
+    if (!entry) return '';
+
+    if (typeof entry === 'string') {
+      return resolveStr(entry, dataScope);
+    }
+
+    if (typeof entry !== 'object' || entry === null) return '';
+
+    const classes = [];
+
+    // Base utility class string
+    if (typeof entry.base === 'string' && entry.base) {
+      classes.push(resolveStr(entry.base, dataScope));
+    } else if (typeof entry.class === 'string' && entry.class) {
+      classes.push(resolveStr(entry.class, dataScope));
+    }
+
+    // Active Variant classes
+    const activeVariant =
+      el?.dataset?.variant ||
+      el?.getAttribute?.('data-variant') ||
+      this.component.variant?.get?.(id) ||
+      entry.defaultVariant ||
+      null;
+
+    if (activeVariant && entry.variants && typeof entry.variants === 'object') {
+      const vVal = entry.variants[activeVariant];
+      if (typeof vVal === 'string' && vVal) {
+        classes.push(resolveStr(vVal, dataScope));
+      }
+    }
+
+    // States (e.g. hover, focus)
+    if (entry.states && typeof entry.states === 'object') {
+      for (const [state, cls] of Object.entries(entry.states)) {
+        if (typeof cls === 'string' && cls) {
+          const resolved = resolveStr(cls, dataScope);
+          const formatted = resolved
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((c) => (c.includes(':') ? c : `${state}:${c}`))
+            .join(' ');
+          classes.push(formatted);
+        }
+      }
+    }
+
+    // Breakpoints (e.g. md, lg)
+    if (entry.breakpoints && typeof entry.breakpoints === 'object') {
+      for (const [bp, cls] of Object.entries(entry.breakpoints)) {
+        if (typeof cls === 'string' && cls) {
+          const resolved = resolveStr(cls, dataScope);
+          const formatted = resolved
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((c) => (c.includes(':') ? c : `${bp}:${c}`))
+            .join(' ');
+          classes.push(formatted);
+        }
+      }
+    }
+
+    return classes.filter(Boolean).join(' ');
+  }
+
   _resolveLoopItems(repeator, dataScope) {
     if (!repeator) return [];
     if (/^\d+$/.test(String(repeator))) {
@@ -536,7 +617,77 @@ export class WdlDom {
     const merged = { ...tagAttrs, ...idDotAttrs, ...idAttrs };
     const resolved = resolveAll(merged, dataScope);
 
-    this._applyPropsToElement(el, id, resolved);
+    // Merge semantic ID, registry classes, and attr classes
+    const registryClasses = this._getRegistryClasses(id, tag, dataScope, el);
+    const attrClasses = typeof resolved.class === 'string' ? resolved.class : '';
+
+    const combinedClasses = [
+      id,
+      registryClasses,
+      attrClasses,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const uniqueClasses = Array.from(new Set(combinedClasses)).join(' ');
+
+    this._applyPropsToElement(el, id, { ...resolved, class: uniqueClasses });
+  }
+
+  _refreshElementClasses(el, id) {
+    if (!el) return;
+    const normId = normalizeId(id || el.getAttribute('wdl-comp') || '');
+    const compData = this._getComponentData();
+    const attrMap = this._getComponentAttrMap();
+    const tag = (el.tagName || 'div').toLowerCase();
+
+    const idx = el.getAttribute('data-wdl-index');
+    let scope = compData;
+    if (idx !== null && idx !== undefined) {
+      const indexNum = parseInt(idx, 10);
+      const loop = this._findLoopForElement(el);
+      if (loop) {
+        const items = resolvePath(compData, loop.repeator);
+        if (Array.isArray(items) && items[indexNum] !== undefined) {
+          scope = this._createItemScope(items[indexNum], indexNum, compData);
+        } else {
+          scope = { ...compData, _index: indexNum };
+        }
+      } else {
+        scope = { ...compData, _index: indexNum };
+      }
+    }
+
+    const tagAttrs = attrMap[tag] || {};
+    const idDotAttrs = normId ? attrMap['.' + normId] || {} : {};
+    const idAttrs = normId ? attrMap[normId] || {} : {};
+    const merged = { ...tagAttrs, ...idDotAttrs, ...idAttrs };
+    const resolved = resolveAll(merged, scope);
+
+    const registryClasses = this._getRegistryClasses(normId, tag, scope, el);
+    const attrClasses = typeof resolved.class === 'string' ? resolved.class : '';
+
+    const combinedClasses = [
+      normId,
+      registryClasses,
+      attrClasses,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .split(/\s+/)
+      .filter(Boolean);
+
+    el.className = Array.from(new Set(combinedClasses)).join(' ');
+  }
+
+  _refreshAllElementClasses() {
+    for (const [id, nodes] of this.liveNodes) {
+      for (const el of nodes) {
+        this._refreshElementClasses(el, id);
+      }
+    }
   }
 
   /**
@@ -552,8 +703,7 @@ export class WdlDom {
       el.innerHTML = String(props.html);
     }
     if (props.class !== undefined) {
-      const extra = String(props.class).trim();
-      el.className = id ? (extra ? `${id} ${extra}` : id) : extra;
+      el.className = String(props.class).trim();
     }
 
     for (const [key, value] of Object.entries(props)) {
@@ -1036,12 +1186,14 @@ export class WdlDom {
       if (rootEl) {
         if (payload) rootEl.dataset.variant = String(payload);
         else delete rootEl.dataset.variant;
+        this._refreshElementClasses(rootEl, rootId);
         this._log('op', `variant → ${payload || '(none)'} on #${rootId}`);
       }
       return;
     }
     if (payload) el.dataset.variant = String(payload);
     else delete el.dataset.variant;
+    this._refreshElementClasses(el, id);
     this._log('op', `variant → ${payload || '(none)'} on #${id}`);
   }
 
@@ -1056,7 +1208,10 @@ export class WdlDom {
       null;
     if (variant && this.liveMap.has(rootId)) {
       const el = this.getNode(rootId);
-      if (el && el.dataset) el.dataset.variant = String(variant);
+      if (el && el.dataset) {
+        el.dataset.variant = String(variant);
+        this._refreshElementClasses(el, rootId);
+      }
     }
   }
 
@@ -1076,6 +1231,7 @@ export class WdlDom {
 
   _handleRegistry(event) {
     this._syncRegistryStyles();
+    this._refreshAllElementClasses();
     this._log('op', `registry.${event.action}`);
   }
 
