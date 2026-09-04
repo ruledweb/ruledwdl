@@ -128,9 +128,25 @@ class MockElement {
   }
 }
 
+class MockComment {
+  constructor(data = '') {
+    this.nodeType = 8;
+    this.data = String(data);
+    this.parentNode = null;
+  }
+  remove() {
+    if (this.parentNode) {
+      this.parentNode.removeChild(this);
+    }
+  }
+}
+
 globalThis.document = {
   createElement(tag) {
     return new MockElement(tag);
+  },
+  createComment(data) {
+    return new MockComment(data);
   },
   head: new MockElement('head'),
   querySelector(sel) {
@@ -330,4 +346,143 @@ dom.destroy();
 assert.strictEqual(dom.getLiveMap().size, 0, 'LiveMap should be empty after destroy');
 assert.strictEqual(container.children.length, 0, 'Container should be emptied after destroy');
 
+// ---------------------------------------------------------------------------
+// Test 7: Repeated WDL Loop Initial Mount & data-wdl-index Emission
+// ---------------------------------------------------------------------------
+const loopContainer = new MockElement('div');
+const pricingComp = new MockComponentState('pricing-card', {
+  layers: 'ul.features > li.feature*features',
+  attr: {
+    '.feature': { text: '${text}' }
+  },
+  data: {
+    features: [
+      { text: 'First feature' },
+      { text: 'Second feature' }
+    ]
+  }
+});
+
+const loopDom = createWdlDom({
+  container: loopContainer,
+  component: pricingComp
+});
+
+const featureNodes = loopDom.getLiveNodes('feature');
+assert.strictEqual(featureNodes.length, 2, 'Should mount two feature li elements');
+assert.strictEqual(featureNodes[0].tagName, 'LI', 'Feature tag should be LI');
+assert.strictEqual(featureNodes[0].getAttribute('data-wdl-index'), '0', 'Row 0 index should be 0');
+assert.strictEqual(featureNodes[0].textContent, 'First feature', 'Row 0 text should be resolved');
+assert.strictEqual(featureNodes[1].getAttribute('data-wdl-index'), '1', 'Row 1 index should be 1');
+assert.strictEqual(featureNodes[1].textContent, 'Second feature', 'Row 1 text should be resolved');
+assert.strictEqual(loopDom.getLiveMap().has('feature'), true, 'liveMap should contain feature key');
+assert.strictEqual(loopDom.getLiveMap().get('feature'), featureNodes[0], 'liveMap.get should return first element');
+
+// ---------------------------------------------------------------------------
+// Test 8: Surgical data:change (Update item text, Append rows, Remove rows)
+// ---------------------------------------------------------------------------
+const originalNode0 = featureNodes[0];
+const originalNode1 = featureNodes[1];
+
+// 8a: Update existing items and append 3rd item
+pricingComp.snapshot.data.features = [
+  { text: 'Updated First' },
+  { text: 'Updated Second' },
+  { text: 'Third feature' }
+];
+pricingComp.emit('data:change', {
+  type: 'data:change',
+  action: 'set',
+  targetId: 'features',
+  payload: pricingComp.snapshot.data.features
+});
+
+const updatedNodes = loopDom.getLiveNodes('feature');
+assert.strictEqual(updatedNodes.length, 3, 'Should now have 3 feature elements');
+assert.strictEqual(updatedNodes[0], originalNode0, 'Row 0 DOM reference should be preserved (surgical update)');
+assert.strictEqual(updatedNodes[1], originalNode1, 'Row 1 DOM reference should be preserved (surgical update)');
+assert.strictEqual(updatedNodes[0].textContent, 'Updated First', 'Row 0 text should update');
+assert.strictEqual(updatedNodes[1].textContent, 'Updated Second', 'Row 1 text should update');
+assert.strictEqual(updatedNodes[2].textContent, 'Third feature', 'Row 2 text should be set');
+assert.strictEqual(updatedNodes[2].getAttribute('data-wdl-index'), '2', 'Row 2 index should be 2');
+
+// 8b: Remove rows (shrink to 1 item)
+pricingComp.snapshot.data.features = [
+  { text: 'Solo Feature' }
+];
+pricingComp.emit('data:change', {
+  type: 'data:change',
+  action: 'set',
+  targetId: 'features',
+  payload: pricingComp.snapshot.data.features
+});
+
+const shrunkNodes = loopDom.getLiveNodes('feature');
+assert.strictEqual(shrunkNodes.length, 1, 'Should now have 1 feature element');
+assert.strictEqual(shrunkNodes[0], originalNode0, 'Row 0 DOM node should remain mounted');
+assert.strictEqual(shrunkNodes[0].textContent, 'Solo Feature', 'Row 0 text updated');
+assert.strictEqual(shrunkNodes[0].getAttribute('data-wdl-index'), '0', 'Row 0 index remains 0');
+
+// ---------------------------------------------------------------------------
+// Test 9: Loop with Nested Children
+// ---------------------------------------------------------------------------
+const listContainer = new MockElement('div');
+const listComp = new MockComponentState('todo-list', {
+  layers: 'ul.items > li.item*todos > span.label + span.badge',
+  attr: {
+    '.label': { text: '${title}' },
+    '.badge': { text: '${status}' }
+  },
+  data: {
+    todos: [
+      { title: 'Task 1', status: 'done' },
+      { title: 'Task 2', status: 'pending' }
+    ]
+  }
+});
+
+const listDom = createWdlDom({
+  container: listContainer,
+  component: listComp
+});
+
+const items = listDom.getLiveNodes('item');
+assert.strictEqual(items.length, 2, 'Should mount 2 item elements');
+const label0 = listDom.getNode('label', 0);
+const label1 = listDom.getNode('label', 1);
+assert.strictEqual(label0.textContent, 'Task 1', 'Label 0 text');
+assert.strictEqual(label1.textContent, 'Task 2', 'Label 1 text');
+
+// ---------------------------------------------------------------------------
+// Test 10: onDataBind Extension Hook
+// ---------------------------------------------------------------------------
+let customHookCalled = false;
+let customPath = '';
+const hookContainer = new MockElement('div');
+const hookComp = new MockComponentState('hook-test', {
+  layers: 'div.box > p.text',
+  attr: { '.text': { text: 'Initial' } },
+  data: { count: 42 }
+});
+
+const hookDom = createWdlDom({
+  container: hookContainer,
+  component: hookComp,
+  onDataBind: (el, path, val) => {
+    customHookCalled = true;
+    customPath = path;
+  }
+});
+
+hookComp.emit('data:change', {
+  type: 'data:change',
+  action: 'set',
+  targetId: 'count',
+  payload: 100
+});
+
+assert.strictEqual(customHookCalled, true, 'onDataBind extension hook should be invoked');
+assert.strictEqual(customPath, 'count', 'onDataBind received targetId path');
+
 console.log('PASS — @ruledwdl/dom unit tests passed cleanly!');
+

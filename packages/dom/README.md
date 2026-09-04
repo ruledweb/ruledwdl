@@ -136,8 +136,16 @@ hero.registry.addRule({
 
 ### Instance Methods
 - `dom.remount()`: Rebuild the entire DOM from state snapshot.
-- `dom.getLiveMap()`: Returns a snapshot copy of `Map<semanticId, HTMLElement>`.
+- `dom.getLiveMap()`: Returns a snapshot copy of `Map<semanticId, HTMLElement>` (first element per semantic ID).
+- `dom.getLiveNodes(semanticId)`: Returns an array of all live elements matching `semanticId` (e.g. repeated loop rows).
+- `dom.getNode(semanticId, index = 0)`: Returns the live element at the specified index for `semanticId`.
 - `dom.destroy()`: Removes event listeners, empties container, and cleans up style tags.
+
+### Repeated Loops & Surgical Data Reconciliation
+`@ruledwdl/dom` natively reconciles repeated WDL loop layers (e.g. `li.feature*features`) without remounting or wiping `innerHTML`:
+- Materializes all items on initial mount with `data-wdl-index="0"`, `data-wdl-index="1"`, etc.
+- Resolves per-item attribute templates (e.g. `${text}`, `${_index}`).
+- On `component.data.set('features', nextItems)`, surgically updates retained rows, appends added rows, and removes deleted rows.
 
 ---
 

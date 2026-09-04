@@ -48,7 +48,7 @@ The RuledWDL monorepo maintains six core packages:
 | **`@ruledwdl/csr`** | [`packages/csr`](packages/csr) | [`@ruledwdl/csr`](https://www.npmjs.com/package/@ruledwdl/csr) | `0.3.3` | `AGPL-3.0-or-later` | Ultra-lightweight client-side renderer & DOM hydrator with auto-injection of `<style>` tags in `<head>`. |
 | **`@ruledwdl/state`** | [`packages/state`](packages/state) | [`@ruledwdl/state`](https://www.npmjs.com/package/@ruledwdl/state) | `0.1.3` | `AGPL-3.0-or-later` | Headless component state manager for `layers`, `attr`, `data`, `variant`, and `registry` rules. |
 | **`@ruledwdl/events`** | [`packages/events`](packages/events) | [`@ruledwdl/events`](https://www.npmjs.com/package/@ruledwdl/events) | `0.1.0` | `AGPL-3.0-or-later` | Pluggable DOM event adapter for declarative `:event.modifier` binding (`:click`, `:input`, `:keydown.enter`). |
-| **`@ruledwdl/dom`** | [`packages/dom`](packages/dom) | [`@ruledwdl/dom`](https://www.npmjs.com/package/@ruledwdl/dom) | `0.1.0` | `AGPL-3.0-or-later` | Native DOM runtime for `@ruledwdl/state` with surgical element updates driven by state events. |
+| **`@ruledwdl/dom`** | [`packages/dom`](packages/dom) | [`@ruledwdl/dom`](https://www.npmjs.com/package/@ruledwdl/dom) | `0.1.1` | `AGPL-3.0-or-later` | Native DOM runtime for `@ruledwdl/state` with surgical element updates driven by state events. |
 | **`@ruledwdl/nested`** | [`packages/nested`](packages/nested) | [`@ruledwdl/nested`](https://www.npmjs.com/package/@ruledwdl/nested) | `0.1.0` | `AGPL-3.0-or-later` | Nested component resolver and catalog store adapter for recursive `@component` layer macro expansion. |
 
 ---
