@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { createWdlDom, WdlDom } from '../src/index.js';
+import { createWdlDom, WdlDom, parseLayersSimple, isComponentRef, parseLayerToken } from '../src/index.js';
 
 console.log('Running @ruledwdl/dom unit tests...');
 
@@ -573,6 +573,40 @@ regComp.emit('registry:change', {
 assert.ok(regCardEl.className.includes('p-10'), 'Card element should update to new registry base class');
 assert.ok(regCardEl.className.includes('bg-gray-100'), 'Card element should update to new registry background class');
 assert.ok(!regCardEl.className.includes('p-6'), 'Card element should remove old base class');
+
+// ---------------------------------------------------------------------------
+// Test 14: @component layer tokens are leaves, not HTML tags
+// ---------------------------------------------------------------------------
+const atTree = parseLayersSimple(
+  'section.section>div.section_body>@feature-card+@promo-panel*items'
+);
+assert.strictEqual(atTree[0].children[0].semanticId, 'section_body');
+assert.strictEqual(atTree[0].children[0].children[0].tag, '@feature-card');
+assert.strictEqual(atTree[0].children[0].children[1].tag, '@promo-panel');
+assert.strictEqual(atTree[0].children[0].children[1].repeator, 'items');
+assert.strictEqual(isComponentRef('@feature-card'), true);
+const atToken = parseLayerToken('@child-1');
+assert.strictEqual(atToken.tag, '@child-1');
+assert.strictEqual(atToken.semanticId, 'child-1');
+
+const nestContainer = new MockElement('div');
+const nestComp = new MockComponentState('layout', {
+  layers: 'div.container>@card-a+@card-b',
+  attr: {},
+  data: {}
+});
+const nestDom = createWdlDom({
+  container: nestContainer,
+  component: nestComp,
+  styleTarget: globalThis.document.head
+});
+const nestLive = nestDom.getLiveMap();
+assert(nestLive.has('container'), 'layout slot should still mount');
+assert.strictEqual(nestLive.size, 1, '@ refs must not register as live HTML nodes');
+const slotKids = nestLive.get('container').children;
+assert.strictEqual(slotKids.length, 2, 'each @ ref leaves a comment placeholder');
+assert.strictEqual(slotKids[0].nodeType, 8);
+assert.match(slotKids[0].data, /@card-a/);
 
 console.log('PASS — @ruledwdl/dom unit tests passed cleanly!');
 

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ruledwdl/dom — @component refs</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #090d16; color: #e2e8f0; margin: 0; padding: 2rem; }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; }
+    p, li { color: #94a3b8; }
+    #layout, #card { background: #131b2e; border: 1px solid #22304d; border-radius: 12px; padding: 1.25rem; margin: 1rem 0; min-height: 4rem; }
+    .container { display: flex; flex-direction: column; gap: 1rem; min-height: 4rem; }
+    .card { background: #1e293b; border-radius: 8px; padding: 1rem; }
+    .card .title { font-weight: 700; color: #fff; }
+    .card .body { color: #94a3b8; margin-top: .35rem; }
+    button { background: #38bdf8; color: #0b1220; border: 0; border-radius: 6px; padding: .5rem .9rem; font-weight: 700; cursor: pointer; }
+    pre { background: #111827; border-radius: 8px; padding: 1rem; overflow: auto; }
+    .ok { color: #4ade80; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>@ruledwdl/dom — skip <code>@component</code> leaves</h1>
+    <p>Layout layers contain <code>@card</code>. createWdlDom must not hang and must not create invalid tags. Nested child is a second component mounted into the slot.</p>
+    <p id="status" class="ok">Mounting…</p>
+    <h2>Layout slot</h2>
+    <div id="layout"></div>
+    <button id="append" type="button">layout.layers.append('container', '@card')</button>
+    <h2>Child card (separate ComponentState)</h2>
+    <div id="card"></div>
+    <pre id="out"></pre>
+  </main>
+  <script type="module">
+    import { ComponentManager } from '/state/dist/index.js';
+    import { createWdlDom, parseLayersSimple } from '/dom/src/index.js';
+
+    const status = document.getElementById('status');
+    const out = document.getElementById('out');
+    const started = Date.now();
+
+    const mgr = new ComponentManager();
+    const layout = mgr.create('layout', {
+      layers: 'div.container',
+      attr: {},
+      data: {},
+      registry: {
+        $version: '2.1',
+        container: { class: 'container' }
+      }
+    });
+    const card = mgr.create('card', {
+      layers: 'article.card > h3.title + p.body',
+      attr: {
+        '.title': { text: 'Nested card' },
+        '.body': { text: 'Mounted as its own createWdlDom inside the slot.' }
+      },
+      data: {},
+      registry: {
+        $version: '2.1',
+        card: { class: 'card' },
+        title: { class: 'title' },
+        body: { class: 'body' }
+      }
+    });
+
+    const layoutDom = createWdlDom({
+      container: document.getElementById('layout'),
+      component: layout
+    });
+    createWdlDom({
+      container: document.getElementById('card'),
+      component: card
+    });
+
+    function dump(label) {
+      const parsed = parseLayersSimple(String(layout.layers.list()));
+      out.textContent = `${label}
+list(): ${layout.layers.list()}
+tree() tags: ${JSON.stringify(layout.layers.tree(), null, 2)}
+parseLayersSimple: ${JSON.stringify(parsed, null, 2)}
+live keys: ${[...layoutDom.getLiveMap().keys()].join(', ')}`;
+    }
+
+    document.getElementById('append').addEventListener('click', () => {
+      if (String(layout.layers.list()).includes('@card')) {
+        dump('already has @card');
+        return;
+      }
+      layout.layers.append('container', '@card');
+      const slot = layoutDom.getNode('container');
+      const mount = document.getElementById('card');
+      if (slot && mount) slot.appendChild(mount);
+      dump('after append @card');
+    });
+
+    status.textContent = `Mounted in ${Date.now() - started}ms (no hang). Click append to splice @card.`;
+    dump('initial empty slot');
+  </script>
+</body>
+</html>

@@ -71,6 +71,7 @@ hero.layers.wrap('title', 'div.title-wrapper');   // Wraps title in <div class="
 hero.layers.unwrap('title-wrapper');              // Unwraps container and hoists title back
 hero.layers.move('cta', 'title', 'before');       // Moves cta before title
 hero.layers.append('container', 'p.footer_note'); // Appends <p class="footer_note"> inside container
+hero.layers.append('container', '@feature-card'); // Nested component leaf (not an HTML tag)
 
 // 3. Variant & Attribute Management
 hero.variant.set('elevated');                   // Sets data-variant="elevated" on root element
