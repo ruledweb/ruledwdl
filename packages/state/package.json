@@ -8,14 +8,27 @@
     "scripts": {
         "build": "tsc",
         "test": "npm run build && node test/layers.test.js",
-        "dev": "tsc --watch"
+        "dev": "tsc --watch",
+        "prepublishOnly": "npm run build"
     },
+    "files": [
+        "dist",
+        "README.md"
+    ],
     "keywords": [
         "ruledwdl",
         "state",
         "wdl"
     ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ruledweb/ruledwdl.git"
+    },
+    "author": "Pradeep Dabane <pradeep@ruledweb.com>",
     "license": "AGPL-3.0-or-later",
+    "publishConfig": {
+        "access": "public"
+    },
     "devDependencies": {
         "typescript": "^5.9.3"
     }
