@@ -1,4 +1,13 @@
 {
   "cleanUrls": false,
-  "trailingSlash": true
+  "directoryListing": false,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/state/examples", "destination": "/state/examples/index.html" },
+    { "source": "/state/examples/", "destination": "/state/examples/index.html" },
+    { "source": "/dom/examples", "destination": "/dom/examples/index.html" },
+    { "source": "/dom/examples/", "destination": "/dom/examples/index.html" },
+    { "source": "/nested/examples", "destination": "/nested/examples/index.html" },
+    { "source": "/nested/examples/", "destination": "/nested/examples/index.html" }
+  ]
 }
