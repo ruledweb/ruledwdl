@@ -18,7 +18,7 @@
     <pre id="out"></pre>
   </main>
   <script type="module">
-    import { parseLayersToAst, serializeAst } from '../src/index.js';
+    import { parseLayersToAst, serializeAst } from '/nested/src/index.js';
     const layers = 'section.section>div.section_body>@feature-card+@promo-panel*items';
     const ast = parseLayersToAst(layers);
     const back = serializeAst(ast);

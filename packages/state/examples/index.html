@@ -26,39 +26,44 @@
       <button id="append" type="button">Append @child</button>
       <button id="tree" type="button">JSON.stringify(tree())</button>
     </div>
-    <p id="status" class="ok">Ready.</p>
+    <p id="status" class="ok">Loading…</p>
     <pre id="out"></pre>
   </main>
   <script type="module">
-    import { ComponentManager } from '../dist/index.js';
-
-    const mgr = new ComponentManager();
-    const layout = mgr.create('layout', {
-      layers: 'div.container',
-      attr: {},
-      data: {}
-    });
-    let n = 0;
     const out = document.getElementById('out');
     const status = document.getElementById('status');
+    try {
+      const { ComponentManager } = await import('/state/dist/index.js');
+      const mgr = new ComponentManager();
+      const layout = mgr.create('layout', {
+        layers: 'div.container',
+        attr: {},
+        data: {}
+      });
+      let n = 0;
 
-    function render(label) {
-      const list = layout.layers.list();
-      const started = Date.now();
-      const tree = layout.layers.tree();
-      const ms = Date.now() - started;
-      out.textContent = `${label}\nlist(): ${list}\ntree() in ${ms}ms:\n${JSON.stringify(tree, null, 2)}`;
-      status.textContent = ms > 200 ? `tree() was slow (${ms}ms)` : `tree() ok (${ms}ms)`;
-      status.className = ms > 200 ? 'err' : 'ok';
+      function render(label) {
+        const list = layout.layers.list();
+        const started = Date.now();
+        const tree = layout.layers.tree();
+        const ms = Date.now() - started;
+        out.textContent = `${label}\nlist(): ${list}\ntree() in ${ms}ms:\n${JSON.stringify(tree, null, 2)}`;
+        status.textContent = ms > 200 ? `tree() was slow (${ms}ms)` : `tree() ok (${ms}ms)`;
+        status.className = ms > 200 ? 'err' : 'ok';
+      }
+
+      document.getElementById('append').addEventListener('click', () => {
+        n += 1;
+        layout.layers.append('container', `@child-${n}`);
+        render(`append @child-${n}`);
+      });
+      document.getElementById('tree').addEventListener('click', () => render('inspect'));
+      render('initial');
+    } catch (err) {
+      status.textContent = String(err);
+      status.className = 'err';
+      out.textContent = err?.stack || String(err);
     }
-
-    document.getElementById('append').addEventListener('click', () => {
-      n += 1;
-      layout.layers.append('container', `@child-${n}`);
-      render(`append @child-${n}`);
-    });
-    document.getElementById('tree').addEventListener('click', () => render('inspect'));
-    render('initial');
   </script>
 </body>
 </html>
