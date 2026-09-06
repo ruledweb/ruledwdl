@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ruledwdl/state — @component layer tokens</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #0b1220; color: #e2e8f0; margin: 0; padding: 2rem; }
+    main { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; }
+    p { color: #94a3b8; }
+    pre { background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 1rem; overflow: auto; white-space: pre-wrap; }
+    button { background: #38bdf8; color: #0b1220; border: 0; border-radius: 6px; padding: .5rem .9rem; font-weight: 700; cursor: pointer; margin-right: .5rem; margin-top: .5rem; }
+    .ok { color: #4ade80; }
+    .err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>@ruledwdl/state — nested <code>@component</code> leaves</h1>
+    <p>
+      <code>layers.append('container', '@child-1')</code> must stay <code>@child-1</code>.
+      <code>layers.tree()</code> must return a finite tree (no hang).
+    </p>
+    <div>
+      <button id="append" type="button">Append @child</button>
+      <button id="tree" type="button">JSON.stringify(tree())</button>
+    </div>
+    <p id="status" class="ok">Ready.</p>
+    <pre id="out"></pre>
+  </main>
+  <script type="module">
+    import { ComponentManager } from '../dist/index.js';
+
+    const mgr = new ComponentManager();
+    const layout = mgr.create('layout', {
+      layers: 'div.container',
+      attr: {},
+      data: {}
+    });
+    let n = 0;
+    const out = document.getElementById('out');
+    const status = document.getElementById('status');
+
+    function render(label) {
+      const list = layout.layers.list();
+      const started = Date.now();
+      const tree = layout.layers.tree();
+      const ms = Date.now() - started;
+      out.textContent = `${label}\nlist(): ${list}\ntree() in ${ms}ms:\n${JSON.stringify(tree, null, 2)}`;
+      status.textContent = ms > 200 ? `tree() was slow (${ms}ms)` : `tree() ok (${ms}ms)`;
+      status.className = ms > 200 ? 'err' : 'ok';
+    }
+
+    document.getElementById('append').addEventListener('click', () => {
+      n += 1;
+      layout.layers.append('container', `@child-${n}`);
+      render(`append @child-${n}`);
+    });
+    document.getElementById('tree').addEventListener('click', () => render('inspect'));
+    render('initial');
+  </script>
+</body>
+</html>

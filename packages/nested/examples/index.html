@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ruledwdl/nested — @component parse</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #0b1220; color: #e2e8f0; margin: 0; padding: 2rem; }
+    main { max-width: 720px; margin: 0 auto; }
+    pre { background: #111827; border-radius: 8px; padding: 1rem; overflow: auto; }
+    .ok { color: #4ade80; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>@ruledwdl/nested already treats <code>@id</code> as a macro</h1>
+    <p class="ok" id="status"></p>
+    <pre id="out"></pre>
+  </main>
+  <script type="module">
+    import { parseLayersToAst, serializeAst } from '../src/index.js';
+    const layers = 'section.section>div.section_body>@feature-card+@promo-panel*items';
+    const ast = parseLayersToAst(layers);
+    const back = serializeAst(ast);
+    document.getElementById('out').textContent = JSON.stringify({ layers, ast, back }, null, 2);
+    document.getElementById('status').textContent =
+      ast[0].children[0].children[0].tag === '@feature-card'
+        ? 'Parser keeps @feature-card as a leaf. This package did not need a fix.'
+        : 'Unexpected AST shape';
+  </script>
+</body>
+</html>

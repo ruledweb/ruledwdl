@@ -4,6 +4,19 @@ All notable changes, architectural updates, and version releases for `@ruledwdl/
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-09-06
+
+### Fixed
+- **`@component` layer tokens**: `parseLayersSimple` / `parseLayerToken` consume
+  `@name` (optional `.class` and `*loopKey`) as nested component leaves. The
+  previous HTML-tag charset skipped `@`, so the parse index never advanced and
+  `createWdlDom` hung on nested WDL.
+- **Mount**: `@` nodes are not `createElement`'d (invalid tag). A comment
+  placeholder `<!--wdl-ref:@id-->` is left in the slot for the host to replace
+  with a child `createWdlDom`.
+
+---
+
 ## [0.1.2] — 2026-09-04
 
 ### Added

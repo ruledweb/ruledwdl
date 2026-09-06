@@ -90,6 +90,10 @@ export function resolveAll(obj, data) {
  * Parse a single layer token: "button.cta" | "li.feature*features" | "div.card*3"
  * @returns {{ tag: string, semanticId: string, repeator: string | null }}
  */
+export function isComponentRef(tag) {
+  return typeof tag === 'string' && tag.startsWith('@');
+}
+
 export function parseLayerToken(expr) {
   if (typeof expr !== 'string') {
     if (expr && typeof expr === 'object') {
@@ -108,6 +112,14 @@ export function parseLayerToken(expr) {
   if (multIdx !== -1) {
     repeator = str.slice(multIdx + 1);
     str = str.slice(0, multIdx);
+  }
+  if (str.startsWith('@')) {
+    const [tag, extra] = str.split('.');
+    return {
+      tag: tag.toLowerCase(),
+      semanticId: extra || tag.slice(1),
+      repeator,
+    };
   }
   const m = str.match(/^([a-zA-Z][a-zA-Z0-9_-]*)(?:\.([a-zA-Z0-9_-]+))?$/);
   if (!m) {
@@ -187,7 +199,37 @@ export function parseLayersSimple(str) {
       continue;
     }
 
+    // `@name` is a nested component leaf. Consume it so the parse index
+    // always advances (`@` is outside the HTML tag charset).
+    if (ch === '@') {
+      i++;
+      let name = '';
+      while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) name += str[i++];
+      let semanticId = name;
+      if (str[i] === '.') {
+        i++;
+        let extra = '';
+        while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) extra += str[i++];
+        if (extra) semanticId = extra;
+      }
+      let repeator = null;
+      if (str[i] === '*') {
+        i++;
+        let rep = '';
+        while (i < str.length && /[a-zA-Z0-9_.]/.test(str[i])) rep += str[i++];
+        if (rep) repeator = rep;
+      }
+      top().children.push({
+        tag: `@${name || 'component'}`,
+        semanticId,
+        repeator,
+        children: [],
+      });
+      continue;
+    }
+
     // Element token
+    const tokenStart = i;
     let tag = '';
     while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) tag += str[i++];
     let semanticId = '';
@@ -202,6 +244,7 @@ export function parseLayersSimple(str) {
       while (i < str.length && /[a-zA-Z0-9_.]/.test(str[i])) rep += str[i++];
       if (rep) repeator = rep;
     }
+    if (i === tokenStart) i++;
     top().children.push({
       tag: tag.toLowerCase() || 'div',
       semanticId,
@@ -537,6 +580,16 @@ export class WdlDom {
    * Handles loop expansion vs single element mounting.
    */
   _mountLayerNode(parentEl, node, dataScope) {
+    // `@component` is a nested macro. This runtime paints one component; leave
+    // a comment so the host can mount the child instance in the slot.
+    if (isComponentRef(node.tag)) {
+      if (typeof document.createComment === 'function') {
+        const label = node.repeator ? `${node.tag}*${node.repeator}` : node.tag;
+        parentEl.appendChild(document.createComment(`wdl-ref:${label}`));
+      }
+      return;
+    }
+
     if (node.repeator) {
       const items = this._resolveLoopItems(node.repeator, dataScope);
       const elements = [];
@@ -573,6 +626,9 @@ export class WdlDom {
    * Create a single DOM element for a layer node with item scope and attributes.
    */
   _createSingleElement(node, dataScope, index) {
+    if (isComponentRef(node.tag)) {
+      throw new Error('[wdl-dom] @component refs are not HTML tags');
+    }
     const tag = (node.tag || 'div').toLowerCase();
     const id = normalizeId(node.semanticId || node.id || '');
     const el = document.createElement(tag);

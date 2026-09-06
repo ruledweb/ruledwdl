@@ -123,11 +123,49 @@ function parseExpression(str: string): LayerNode[] {
     return root.children;
 }
 
+export function isComponentRef(tag: string | undefined | null): boolean {
+    return typeof tag === "string" && tag.startsWith("@");
+}
+
 function parseElementToken(
     str: string,
     start: number
 ): { node: LayerNode; next: number } {
     let i = start;
+
+    // `@name` is a nested component leaf, not an HTML tag. Consume it so
+    // parse/tree cannot hang (the `@` is outside the tag charset).
+    if (str[i] === "@") {
+        i++;
+        let name = "";
+        while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) {
+            name += str[i++];
+        }
+        const tag = `@${name || "component"}`;
+        let semanticId = name;
+        if (i < str.length && str[i] === ".") {
+            i++;
+            let extra = "";
+            while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) {
+                extra += str[i++];
+            }
+            if (extra) semanticId = extra;
+        }
+        let repeator: string | null = null;
+        if (i < str.length && str[i] === "*") {
+            i++;
+            let mult = "";
+            while (i < str.length && /[a-zA-Z0-9_.]/.test(str[i])) {
+                mult += str[i++];
+            }
+            if (mult) repeator = mult;
+        }
+        return {
+            node: { tag, semanticId, children: [], repeator },
+            next: i,
+        };
+    }
+
     let tag = "";
     while (i < str.length && /[a-zA-Z0-9_-]/.test(str[i])) {
         tag += str[i++];
@@ -150,6 +188,9 @@ function parseElementToken(
         }
         if (mult) repeator = mult;
     }
+
+    // Unknown character: skip it so the parse index always advances.
+    if (i === start) i++;
 
     tag = tag || "div";
     if (!semanticId) semanticId = tag;
@@ -188,12 +229,22 @@ export function findNode(
 }
 
 function formatNode(node: LayerNode): string {
-    const sem = node.semanticId ? `.${node.semanticId}` : "";
     const rep = node.repeator
         ? node.repeator.startsWith("*")
             ? node.repeator
             : `*${node.repeator}`
         : "";
+    if (isComponentRef(node.tag)) {
+        const id = node.tag.slice(1);
+        const extra =
+            node.semanticId &&
+            node.semanticId !== id &&
+            node.semanticId !== node.tag
+                ? `.${node.semanticId}`
+                : "";
+        return `${node.tag}${extra}${rep}`;
+    }
+    const sem = node.semanticId ? `.${node.semanticId}` : "";
     return `${node.tag || "div"}${sem}${rep}`;
 }
 
