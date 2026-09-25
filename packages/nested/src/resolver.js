@@ -238,6 +238,14 @@ export function createNestedResolver(options = {}) {
 
           const subRoot = subAst[0];
           
+          // Track macro component reference
+          subRoot.wdlComp = compId;
+          const rootSel = subRoot.classes?.[0] ? '.' + subRoot.classes[0] : subRoot.tag;
+          if (!mergedAttr[rootSel]) mergedAttr[rootSel] = {};
+          if (mergedAttr[rootSel]['data-wdl-comp'] === undefined) {
+            mergedAttr[rootSel]['data-wdl-comp'] = compId;
+          }
+
           // Inherit loop key from placeholder if defined (e.g. @stat-item*stats)
           if (node.loopKey) {
             subRoot.loopKey = node.loopKey;

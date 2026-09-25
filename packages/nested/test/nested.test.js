@@ -163,6 +163,10 @@ assert(html.includes('Hello Nested Components'), 'Should render resolved hero co
 assert(html.includes('42'), 'Should render first looped stat item value');
 assert(html.includes('100'), 'Should render second looped stat item value');
 assert(html.includes('Score'), 'Should render first looped stat item label');
+assert(html.includes('data-wdl-comp="stat-item"'), 'Should render data-wdl-comp metadata on expanded stat item');
+assert(html.includes('data-wdl-loop="stats"'), 'Should render data-wdl-loop="stats" on looped stat item');
+assert(html.includes('data-wdl-index="0"'), 'Should render data-wdl-index="0" on first looped stat item');
+assert(html.includes('data-wdl-index="1"'), 'Should render data-wdl-index="1" on second looped stat item');
 
 // ---------------------------------------------------------------------------
 // Test 7: Cycle Protection Guard

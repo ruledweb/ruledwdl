@@ -29,10 +29,16 @@ export function buildEl(node, attr, data, registry, opts = {}) {
   const SKIP = new Set(['alpine', 'htmx', 'attr-ref', 'text', 'class']);
   const flat = { ...res, ...(res.alpine || {}), ...(res.htmx || {}) };
   if (!flat['wdl-comp']) {
-    flat['wdl-comp'] = node.classes[0] || node.tag;
+    flat['wdl-comp'] = node.wdlComp || node.classes[0] || node.tag;
+  }
+  if (node.wdlComp && flat['data-wdl-comp'] === undefined) {
+    flat['data-wdl-comp'] = String(node.wdlComp);
   }
   if (data && data._index !== undefined && flat['data-wdl-index'] === undefined) {
     flat['data-wdl-index'] = String(data._index);
+  }
+  if ((node._loopKey || data?._loopKey) && flat['data-wdl-loop'] === undefined) {
+    flat['data-wdl-loop'] = String(node._loopKey || data._loopKey);
   }
   const allCls = [
     ...(base.class || '').split(' '),
@@ -87,9 +93,9 @@ export function toHTML(node, attr, data, registry, opts = {}) {
     if (Array.isArray(items) && items.length > 0) {
       return items
         .map((item, idx) => {
-          const sd = { ...data, ...item, _index: idx };
+          const sd = { ...data, ...item, _index: idx, _loopKey: node.loopKey };
           return buildEl(
-            { ...node, loopKey: null, children: [...node.children] },
+            { ...node, loopKey: null, _loopKey: node.loopKey, children: [...node.children] },
             attr,
             sd,
             registry,

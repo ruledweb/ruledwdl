@@ -430,6 +430,21 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   ok('@ruledwdl/csr renders components with V2.1 normalized registry attributes',
     csrHtml.includes('data-variant="elevated"') && csrHtml.includes('class="card"')
   );
+
+  // Test loop context attributes: data-wdl-loop, data-wdl-index, and wdl-comp
+  const loopHtml = renderAll(
+    {},
+    [{ layers: 'div.grid > div.card*items > span.title', attr: { '.title': { text: '${title}' } } }],
+    { items: [{ title: 'First' }, { title: 'Second' }] }
+  );
+  ok('renders loop items with data-wdl-loop, data-wdl-index, and wdl-comp attributes',
+    loopHtml.includes('data-wdl-loop="items"') &&
+    loopHtml.includes('data-wdl-index="0"') &&
+    loopHtml.includes('data-wdl-index="1"') &&
+    loopHtml.includes('wdl-comp="card"') &&
+    loopHtml.includes('First') &&
+    loopHtml.includes('Second')
+  );
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

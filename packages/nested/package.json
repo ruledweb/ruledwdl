@@ -1,6 +1,6 @@
 {
   "name": "@ruledwdl/nested",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Nested component resolver and library catalog store adapter for RuledWDL.",
   "main": "src/index.js",
   "type": "module",
