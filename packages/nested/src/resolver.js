@@ -118,6 +118,18 @@ export function serializeAst(nodes) {
     return s;
   }
 
+  // After a node is written, the cursor sits inside its deepest last child.
+  // A following sibling needs that many climbs to return to the shared parent.
+  function trailingDepth(node) {
+    let depth = 0;
+    let current = node;
+    while (current.children && current.children.length) {
+      depth += 1;
+      current = current.children[current.children.length - 1];
+    }
+    return depth;
+  }
+
   function serializeTree(nodeList) {
     const parts = [];
     for (let i = 0; i < nodeList.length; i++) {
@@ -125,9 +137,10 @@ export function serializeAst(nodes) {
       let currStr = serializeNode(curr);
       if (curr.children && curr.children.length) {
         currStr += '>' + serializeTree(curr.children);
-        if (i < nodeList.length - 1) {
-          currStr += '<';
-        }
+      }
+      if (i < nodeList.length - 1) {
+        const climbs = trailingDepth(curr);
+        if (climbs > 0) currStr += '<'.repeat(climbs);
       }
       parts.push(currStr);
     }

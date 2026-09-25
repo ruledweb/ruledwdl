@@ -22,6 +22,14 @@ assert.strictEqual(ast1[0].classes[0], 'hero');
 const serialized1 = serializeAst(ast1);
 assert.strictEqual(serialized1, layers1);
 
+const layersDeep = 'li.group>div.row>button.main>span.label<a.link>span.text<<ul.sub>li.item';
+const astDeep = parseLayersToAst(layersDeep);
+const serializedDeep = serializeAst(astDeep);
+const astDeepAgain = parseLayersToAst(serializedDeep);
+assert.strictEqual(astDeepAgain[0].children.length, 2);
+assert.strictEqual(astDeepAgain[0].children[1].classes[0], 'sub');
+assert.strictEqual(astDeepAgain[0].children[0].children.length, 2);
+
 const layers2 = 'div.grid>@card.premium*items';
 const ast2 = parseLayersToAst(layers2);
 assert.strictEqual(ast2[0].children[0].tag, '@card');
