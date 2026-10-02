@@ -115,6 +115,15 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
     rowD1.children[0].classes.includes('col') &&
     rowD1.children[1].classes.includes('side')
   );
+
+  const astBare = parseLayers('div.drawer>aside.panel>div.header>button.close<@vertical-menu');
+  const panel = astBare[0].children[0];
+  ok('bare <@ is one climb and keeps the @component token',
+    astBare.length === 1 &&
+    panel.classes.includes('panel') &&
+    panel.children.length === 2 &&
+    panel.children[1].tag === '@vertical-menu'
+  );
 }
 
 // 6) WDL Layers strict single semantic_id rule

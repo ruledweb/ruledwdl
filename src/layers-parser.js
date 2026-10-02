@@ -114,14 +114,14 @@ export function parseLayers(raw) {
         for (let k = 0; k < count; k++) {
           if (stack.length > 1) stack.pop();
         }
-      } else if (i < str.length && str[i] === "@") {
+      } else if (i < str.length && str[i] === "@" && /\d/.test(str[i + 1] || "")) {
         i++;
         let numStr = "";
         while (i < str.length && /\d/.test(str[i])) {
           numStr += str[i];
           i++;
         }
-        const targetDepth = numStr ? parseInt(numStr, 10) : 0;
+        const targetDepth = parseInt(numStr, 10);
         const targetStackLen = targetDepth + 1;
         while (stack.length > targetStackLen && stack.length > 1) {
           stack.pop();

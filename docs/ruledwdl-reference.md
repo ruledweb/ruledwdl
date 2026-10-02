@@ -65,7 +65,7 @@ Supported:
   sibling      +   (sibling at current level)
   de-indent    <   (climb up one parent scope; << climbs 2 levels)
   de-indent *  <*N (repeater: de-indents N levels, e.g. <*3 === <<<)
-  de-indent @  <@N (depth reference: de-indents to absolute depth level N; root elements = depth 0)
+  de-indent @  <@N (depth reference: N is required; <@0 is the root, <@1 is depth 1. A bare <@ is one < climb and the @ starts a component)
   numeric *N   li*3
   data loop    li*items  or  li*items.posts (renders one per DATA array entry)
 
