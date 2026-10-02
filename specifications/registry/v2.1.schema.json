@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.ruledwdl.dev/specification/registry/v2.1.schema.json",
+  "title": "WDL REGISTRY v2.1",
+  "description": "A REGISTRY object. Each key other than $version and __tokens__ is a semantic id. An entry is a utility class string, an HTML attribute object, or a structured entry. Utility keys become the class attribute. rules and variant css objects become @scope (.semantic_id). Unknown keys on a structured entry are copied onto the element as HTML attributes. scopes is rejected: the compiler does not emit it.",
+  "type": "object",
+  "$defs": {
+    "cssDeclarations": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string" }
+    },
+    "cssRule": {
+      "type": "object",
+      "required": ["css"],
+      "additionalProperties": false,
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "Selector inside the scope. :scope is the semantic id element. & .child is a descendant. Omitted selector means :scope."
+        },
+        "media": {
+          "type": "string",
+          "description": "Media query text without the @media keyword, for example (min-width: 768px)."
+        },
+        "css": { "$ref": "#/$defs/cssDeclarations" }
+      }
+    },
+    "utilityMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "variantValue": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Utility classes stamped on the element when this variant is active."
+        },
+        {
+          "type": "object",
+          "required": ["css"],
+          "additionalProperties": false,
+          "properties": {
+            "css": {
+              "description": "Declarations compiled to :scope[data-variant=name] inside @scope (.semantic_id).",
+              "$ref": "#/$defs/cssDeclarations"
+            }
+          }
+        }
+      ]
+    },
+    "entry": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "v1 utility class string. Stamped onto the element class."
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "uses": {
+              "type": "array",
+              "items": { "type": "string" },
+              "uniqueItems": true,
+              "description": "Parent semantic ids merged before this entry. rules arrays are concatenated. Other maps merge by key."
+            },
+            "vars": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Local variables. $_{name} reads one. ${name} reads __tokens__.vars."
+            },
+            "base": {
+              "type": "string",
+              "description": "Utility classes always stamped on this element."
+            },
+            "variants": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/variantValue" }
+            },
+            "defaultVariant": {
+              "type": "string",
+              "description": "Active variant name. The compiler also writes data-variant to this value."
+            },
+            "states": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Pseudo-class name to utility classes. The key is prefixed onto every class: hover + shadow-lg becomes hover:shadow-lg. A class that already starts with hover: is left as written."
+            },
+            "breakpoints": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Screen name to utility classes. The key is prefixed onto every class, including one that already has another prefix: md + hover:bg-blue becomes md:hover:bg-blue. A class that already starts with md: is left as written."
+            },
+            "containers": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Container query name to utility classes, using the same prefix rule. @md + flex-row becomes @md:flex-row."
+            },
+            "rules": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/cssRule" },
+              "description": "Scoped CSS compiled to @scope (.semantic_id). The HTML tag is not part of the selector."
+            },
+            "scopes": false
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "$version": { "const": "2.1" },
+    "__tokens__": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vars"],
+      "properties": {
+        "vars": {
+          "$ref": "#/$defs/utilityMap",
+          "description": "Global tokens compiled to :root custom properties."
+        }
+      }
+    }
+  },
+  "additionalProperties": { "$ref": "#/$defs/entry" },
+  "examples": [
+    {
+      "$version": "2.1",
+      "__tokens__": {
+        "vars": {
+          "color-primary": "#4f46e5",
+          "space-card": "1.5rem"
+        }
+      },
+      "surface": "bg-white",
+      "link": { "class": "underline", "href": "${url}" },
+      "card": {
+        "uses": ["surface"],
+        "vars": { "pad": "${space-card}" },
+        "base": "shadow-md p-$_{pad}",
+        "defaultVariant": "elevated",
+        "variants": {
+          "elevated": "shadow-lg",
+          "flat": { "css": { "box-shadow": "none", "border": "1px solid #e5e7eb" } }
+        },
+        "states": { "hover": "shadow-lg" },
+        "breakpoints": { "md": "p-8" },
+        "containers": { "@md": "flex-row" },
+        "rules": [
+          { "selector": ":scope", "css": { "display": "flex", "gap": "0.75rem" } },
+          { "selector": "& .button", "css": { "background": "#e5e7eb" } },
+          { "media": "(max-width: 640px)", "selector": "& .badge", "css": { "display": "none" } }
+        ]
+      }
+    }
+  ]
+}

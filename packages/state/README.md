@@ -10,7 +10,7 @@ State management, DOM tree mutation, and event bus manager for RuledWDL componen
 ## Features
 
 - **Component Management**: Multi-component registry lifecycle (`list`, `get`, `create`, `remove`).
-- **Layers Positioning & Tree Mutations**: AST layer operations (`append`, `prepend`, `before`, `after`, `wrap`, `unwrap`, `move`, `remove`, `update`, `set`, `tree`, `list`) with full support for WDL operator grammars (`>`, `+`, `<`, `<*N`, `<@N`).
+- **Layers Positioning & Tree Mutations**: AST layer operations (`append`, `prepend`, `before`, `after`, `wrap`, `unwrap`, `move`, `remove`, `update`, `set`, `tree`, `list`) with full support for WDL operator grammars (`>`, `+`, `<`, `<*N`, `<@N`). `<@N` needs a digit. A bare `<@` climbs one level and core prints `<@name></@name>`.
 - **Attribute & Variant Operations**: Read, set, update, and remove element attributes, plus a first-class `variant` API for managing `data-variant` attributes.
 - **Data Binding Operations**: Path-based state getter/setters (`hero.data.get('user.name')`, `hero.data.set(...)`).
 - **REGISTRY Schema V2.1 Management**: Add, update, and remove Schema V2.1 Scoped CSS rules (`hero.registry.addRule(...)`) and variables.

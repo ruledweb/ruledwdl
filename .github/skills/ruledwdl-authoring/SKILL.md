@@ -66,9 +66,9 @@ A complete RuledWDL page is a JSON object composed of four key sections: `REGIST
 }
 ```
 
-- **`REGISTRY`** ([`specifications/registry/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md)): Map of component tokens, base attributes, Scoped CSS `@scope` rules, and CSS variables.
-- **`COMPONENTS`** ([`specifications/component/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md)): Ordered array of visual layer definitions or component references.
-- **`DATA`** ([`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)): State object containing dynamic variables, loop arrays, head elements, and CSS design tokens.
+- **`REGISTRY`** ([`specifications/registry/v2.1.schema.json`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.1.schema.json)): Normative JSON Schema. Utility classes and `rules` share one entry. Scope root is `.semantic_id`. Do not write `scopes`.
+- **`COMPONENTS`** ([`specifications/component/v2.0.schema.json`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.schema.json)): Normative JSON Schema for a layers entry or a `{ component, data_overrides, style_overrides }` reference.
+- **`DATA`** ([`specifications/data/v2.0.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md)): Envelope and reserved keys only. Core has no JSON Schema for author fields. Write those as Draft-07 `DATA_SCHEMA`.
 - **`DATA_SCHEMA`**: Standard JSON Schema (Draft-07) defining the typing contract and property validation for `DATA`.
 - **`layout`** *(optional)*: Name of the layout wrapper to extend.
 - **`fullPage`** *(optional)*: Boolean. If `false` (default), the renderer wraps the output with UTF-8, viewport, title, and Tailwind CSS.
@@ -156,7 +156,7 @@ The `layers` string defines the visual DOM hierarchy using a compact selector sy
   - `+` : Add sibling at current scope level.
   - `<` : De-indent 1 parent scope level (`<<` climbs 2 levels).
   - `<*N` : De-indent repeater ($N$ levels, e.g. `<*3` $\equiv$ `<<<`).
-  - `<@N` : De-indent to absolute depth level $N$ (where depth 0 = root layer elements).
+  - `<@N` : De-indent to absolute depth $N$. The digit is required. `<@0` is the root and `<@1` is depth 1. A bare `<@` climbs one level and core prints the tag `<@name></@name>`. See the bare `<@` scenario below.
   - `*N` : Static numeric multiplier (`li.item*3`).
   - `*key` or `*nested.path` : Data array loop (`div.card*features`).
 - **Automatic Attributes**:
@@ -180,9 +180,20 @@ div.shell > main > div.content > p.text << footer.site_footer
 // '<*3' repeats de-indent 3 levels
 div.level0 > div.level1 > div.level2 > div.level3 > p.leaf <*3 div.sibling_of_level1
 
-// '<@0' jumps back to absolute root depth (depth 0)
+// '<@0' jumps back to absolute root depth (depth 0). The digit is required.
 section.section1 > div.container > h2.title <@0 section.section2 > div.container > h2.title
+
+// Bare '<@' climbs one level. Core prints the tag <@vertical-menu>. It does not climb to depth 0.
+div.drawer>aside.panel>div.header>button.close<@vertical-menu
 ```
+
+Core only prints:
+
+```html
+<div class="drawer" wdl-comp="drawer"><aside class="panel" wdl-comp="panel"><div class="header" wdl-comp="header"><button class="close" wdl-comp="close"></button></div><@vertical-menu wdl-comp="@vertical-menu"></@vertical-menu></aside></div>
+```
+
+`button.close` is inside `div.header`. One climb places `@vertical-menu` inside `aside.panel`, beside `div.header`. The tag in the HTML is `<@vertical-menu></@vertical-menu>`.
 
 #### 3. Data Loop (`*loopKey`)
 ```
@@ -250,7 +261,8 @@ The `REGISTRY` maps semantic component IDs to default attributes, Scoped CSS rul
 ```
 
 ### Registry Features
-- **Scoped CSS Rules (`@scope`)**: Compiled directly into `<style data-wdl="components">` using native CSS `@scope (tag.semantic_id)`.
+- **Utility maps**: `states`, `breakpoints`, and `containers` prefix the map key onto every class. `"md": "p-8 hover:bg-blue"` becomes `md:p-8 md:hover:bg-blue`. A class that already starts with that same prefix is left as written.
+- **Scoped CSS Rules (`@scope`)**: Compiled directly into `<style data-wdl="components">` using native CSS `@scope (.semantic_id)`. The scope root is the class. The HTML tag stays in the layers string.
 - **`:scope`**: Refers to the component root element.
 - **`& .child`**: Refers to descendants inside the component boundary.
 - **`vars`**: Emits scoped CSS custom properties `--var-name: value`.

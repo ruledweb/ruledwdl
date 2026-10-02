@@ -6,9 +6,37 @@ This log tracks all version changes, specification releases, and schema updates 
 
 ## 📜 Specification Version History
 
+### Layers grammar clarification (Core v0.3.5)
+
+> **Status**: Parser rule for the existing `<@N` operator  
+> **Target Engine**: `@ruledwdl/core` 0.3.5
+
+* `<@N` is an absolute depth climb only when a digit is present. `<@0` climbs to the root. `<@1` climbs to depth 1.
+* A bare `<@` climbs one level. Core prints the following name as the tag `<@name>`.
+
+Core only, using `renderAll` and this layers string:
+
+```
+div.drawer>aside.panel>div.header>button.close<@vertical-menu
+```
+
+```
+div.drawer
+  aside.panel
+    div.header
+      button.close
+    @vertical-menu
+```
+
+```html
+<div class="drawer" wdl-comp="drawer"><aside class="panel" wdl-comp="panel"><div class="header" wdl-comp="header"><button class="close" wdl-comp="close"></button></div><@vertical-menu wdl-comp="@vertical-menu"></@vertical-menu></aside></div>
+```
+
+`@vertical-menu` is inside `aside.panel`. The printed tag is `<@vertical-menu></@vertical-menu>`. It is not placed beside `div.drawer`.
+
 ### Version 0.3.0 Release (Released: 2026-08-12 — WDL Core v0.3.0)
 
-> **Status**: Current Engine Release  
+> **Status**: Released  
 > **Target Engine**: `@ruledwdl/core@^0.3.0`, `@ruledwdl/csr@^0.3.0`
 
 * **100% Zero-Dependency Core Engine**:

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.ruledwdl.dev/specification/registry/v2.0.schema.json",
+  "title": "WDL REGISTRY v2.0",
+  "description": "A REGISTRY object in utility-class mode. rules and variant css objects belong to v2.1. scopes is rejected: the compiler does not emit it. Unknown keys on a structured entry are copied onto the element as HTML attributes.",
+  "type": "object",
+  "$defs": {
+    "utilityMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "entry": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "v1 utility class string."
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "uses": {
+              "type": "array",
+              "items": { "type": "string" },
+              "uniqueItems": true
+            },
+            "vars": { "$ref": "#/$defs/utilityMap" },
+            "base": { "type": "string" },
+            "variants": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "defaultVariant": { "type": "string" },
+            "states": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Pseudo-class name to utility classes. hover + shadow-lg becomes hover:shadow-lg. A class that already starts with that prefix is left as written."
+            },
+            "breakpoints": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Screen name to utility classes. md + hover:bg-blue becomes md:hover:bg-blue. A class that already starts with md: is left as written."
+            },
+            "containers": {
+              "$ref": "#/$defs/utilityMap",
+              "description": "Container name to utility classes. @md + flex-row becomes @md:flex-row."
+            },
+            "rules": false,
+            "scopes": false
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "$version": { "const": "2.0" },
+    "__tokens__": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vars"],
+      "properties": {
+        "vars": { "$ref": "#/$defs/utilityMap" }
+      }
+    }
+  },
+  "additionalProperties": { "$ref": "#/$defs/entry" },
+  "examples": [
+    {
+      "$version": "2.0",
+      "__tokens__": {
+        "vars": {
+          "color-primary": "#4f46e5",
+          "spacing-card": "1.5rem"
+        }
+      },
+      "card-base": {
+        "vars": { "pad": "${spacing-card}" },
+        "base": "p-$_{pad} rounded-xl shadow-sm"
+      },
+      "hero-card": {
+        "uses": ["card-base"],
+        "vars": { "bg": "#ffffff" },
+        "base": "bg-$_{bg} border border-gray-200",
+        "defaultVariant": "elevated",
+        "variants": {
+          "elevated": "shadow-lg border-transparent",
+          "flat": "border-none shadow-none"
+        },
+        "states": { "hover": "border-$_{color-primary}" },
+        "breakpoints": { "md": "p-8" },
+        "containers": { "@sm": "flex-row" }
+      }
+    }
+  ]
+}

@@ -54,7 +54,7 @@ Every element node in a `layers` expression MUST follow `tag.semantic_id`. Stric
 | `+` | Sibling | Add sibling at current DOM level. |
 | `<` | De-indent | Climb up 1 parent scope level (`<<` climbs 2 levels). |
 | `<*N` | Repeater De-indent | De-indents $N$ parent levels (e.g. `<*3` $\equiv$ `<<<`). *(New in v2.0)* |
-| `<@N` | Absolute Depth | De-indents directly to absolute depth level $N$ ($0$ = root scope). *(New in v2.0)* |
+| `<@N` | Absolute Depth | De-indents to absolute depth $N$. The digit is required: `<@0` is the root, `<@1` is depth 1. A bare `<@` climbs one level and core prints `<@name></@name>`. See `docs/ruledwdl-reference.md`. *(New in v2.0; digit required in core 0.3.5)* |
 | `*N` | Static Multiplier | Renders element $N$ times (`li.item*3`). |
 | `*items` | Data Loop | Renders array loop over `DATA.items` (`li.post*posts`). |
 
@@ -69,5 +69,6 @@ Every element node in a `layers` expression MUST follow `tag.semantic_id`. Stric
 
 ## 5. Changelog
 
+* **`2.0`** (Core v0.3.5): `<@N` requires a digit. `<@0` climbs to the root and `<@1` climbs to depth 1. A bare `<@` climbs one level and core prints the tag `<@name></@name>`, as in `<@vertical-menu></@vertical-menu>` inside `aside.panel`.
 * **`2.0`** (Core v0.2.0): Added `<*N` repeater operator, `<@N` absolute depth reference operator, automatic `wdl-comp` attribute emission, and `$version` schema field.
 * **`1.0`** (Core v0.1.x): Baseline WDL Layers syntax (`>`, `+`, `<`).

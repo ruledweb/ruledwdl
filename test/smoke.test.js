@@ -218,7 +218,7 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
           hover: 'bg-$_{color-primary}'
         },
         breakpoints: {
-          md: 'p-8'
+          md: 'p-8 hover:bg-blue md:p-8'
         }
       }
     },
@@ -240,7 +240,9 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
     html.includes('bg-[#ffffff]') &&
     html.includes('border border-gray-200') &&
     html.includes('hover:bg-[var(--color-primary)]') &&
-    html.includes('md:p-8')
+    html.includes('md:p-8') &&
+    html.includes('md:hover:bg-blue') &&
+    !html.includes('md:md:')
   );
 }
 
@@ -422,7 +424,8 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
 
   ok('V2.1 emits <style data-wdl="components"> with @scope rules',
     htmlV21.includes('<style data-wdl="components">') &&
-    htmlV21.includes('@scope (div.card)') &&
+    htmlV21.includes('@scope (.card)') &&
+    !htmlV21.includes('@scope (div.card)') &&
     htmlV21.includes('padding:var(--space-card)') &&
     htmlV21.includes(':scope[data-variant="elevated"]') &&
     htmlV21.includes('@media (min-width: 768px)')
@@ -431,6 +434,20 @@ ok('renderAll standalone', frag.includes('hi') && frag.includes('class="x"'));
   ok('V2.1 renders data-variant attribute on element',
     htmlV21.includes('data-variant="elevated"') &&
     htmlV21.includes('wdl-comp="card"')
+  );
+
+  const { html: buttonScoped } = await composePage(
+    createMemoryStore({}),
+    'demo',
+    {
+      REGISTRY: { btn: { rules: [{ selector: ':scope', css: { background: 'navy' } }] } },
+      COMPONENTS: [{ layers: 'button.btn' }]
+    }
+  );
+  ok('V2.1 scope root is the semantic id, so rules match a non-div tag',
+    buttonScoped.includes('@scope (.btn)') &&
+    !buttonScoped.includes('@scope (div.btn)') &&
+    buttonScoped.includes('<button class="btn"')
   );
 
   // Test @ruledwdl/csr render module

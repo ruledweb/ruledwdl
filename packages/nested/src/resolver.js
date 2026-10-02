@@ -8,7 +8,7 @@
 
 /**
  * Lightweight layers parser fallback if global WDL.parseLayers is not provided.
- * Supports standard WDL operator grammars: >, +, <, <*N, <@N, *multiplier, *loopKey.
+ * Supports >, +, <, <<, <*N, *multiplier, and *loopKey. A bare <@ climbs one level and core prints the tag <@name>. Absolute depth <@0 and <@1 are parsed by @ruledwdl/core when that parser is passed in.
  */
 export function parseLayersToAst(str) {
   if (Array.isArray(str)) return structuredClone(str);

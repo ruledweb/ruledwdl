@@ -65,7 +65,7 @@ Supported:
   sibling      +   (sibling at current level)
   de-indent    <   (climb up one parent scope; << climbs 2 levels)
   de-indent *  <*N (repeater: de-indents N levels, e.g. <*3 === <<<)
-  de-indent @  <@N (depth reference: N is required; <@0 is the root, <@1 is depth 1. A bare <@ is one < climb and the @ starts a component)
+  de-indent @  <@N (depth reference: the digit is required. <@0 is the root, <@1 is depth 1. A bare <@ climbs one level and core prints the name as the tag <@name>)
   numeric *N   li*3
   data loop    li*items  or  li*items.posts (renders one per DATA array entry)
 
@@ -75,6 +75,34 @@ Precedence & Scoping:
   Example: `header>div.container>h1+p<div.banner` renders `header` containing `div.container` (with `h1` and `p`), followed by sibling `div.banner` directly inside `header`.
   Example: `div.shell>main>article>h1<<footer` renders `footer` as a sibling of `main` under `div.shell`.
   Example: `div.row>div.col>article>p<@0section.footer` de-indents to depth level 0 (`div.row` level), making `section.footer` a root-level sibling of `div.row`.
+
+### Bare `<@` is one climb, and core prints `<@name>`
+
+This is core only. `renderAll` from `@ruledwdl/core` is given this layers string and nothing else resolves it:
+
+```
+div.drawer>aside.panel>div.header>button.close<@vertical-menu
+```
+
+The tree is:
+
+```
+div.drawer
+  aside.panel
+    div.header
+      button.close
+    @vertical-menu
+```
+
+`button.close` sits inside `div.header`. The bare `<@` climbs one level, so `@vertical-menu` sits inside `aside.panel`, beside `div.header`. It is not a sibling of `div.drawer`.
+
+Core prints this HTML:
+
+```html
+<div class="drawer" wdl-comp="drawer"><aside class="panel" wdl-comp="panel"><div class="header" wdl-comp="header"><button class="close" wdl-comp="close"></button></div><@vertical-menu wdl-comp="@vertical-menu"></@vertical-menu></aside></div>
+```
+
+The printed tag is `<@vertical-menu></@vertical-menu>`. The node tag is `@vertical-menu`. A missing digit does not mean depth 0. Depth 0 is written `<@0`. Depth 1 is written `<@1`.
 
 ## Automatic `wdl-comp="{semantic-id}"` Attribute
 

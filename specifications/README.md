@@ -8,9 +8,9 @@ This directory contains the formal specifications for the **Web Definition Langu
 
 | Specification Domain | Active Standard | Legacy Standard | Index & Specs Directory |
 | :--- | :--- | :--- | :--- |
-| **`REGISTRY`** | [`v2.0`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v2.0.md) | [`v1.0`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/v1.0.md) | [`registry/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/registry/README.md) |
-| **`COMPONENTS`** | [`v2.0`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v2.0.md) | [`v1.0`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/v1.0.md) | [`component/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/component/README.md) |
-| **`DATA`** | [`v2.0`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v2.0.md) | [`v1.0`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/v1.0.md) | [`data/`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/data/README.md) |
+| **`REGISTRY`** | [`v2.1`](registry.md) · [`schema`](registry/v2.1.schema.json) | [`v2.0`](registry/v2.0.md) · [`v1.0`](registry/v1.0.md) | [`registry/`](registry/README.md) |
+| **`COMPONENTS`** | [`v2.0`](component/v2.0.md) · [`schema`](component/v2.0.schema.json) | [`v1.0`](component/v1.0.md) | [`component/`](component/README.md) |
+| **`DATA`** | [`v2.0` envelope](data/v2.0.md) | [`v1.0`](data/v1.0.md) | [`data/`](data/README.md) |
 | **Version Logs** | — | — | [`v.md`](file:///home/pradeep/cloudflare/workers/wdl-core/specifications/v.md) |
 
 ---

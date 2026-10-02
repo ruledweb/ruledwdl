@@ -33,10 +33,9 @@ export function expandCssValue(val, localVars = {}, globalTokens = {}) {
  * @param {string} key - Component semantic ID (e.g. "card")
  * @param {Object} entry - Resolved REGISTRY entry
  * @param {Object} globalTokens - Global __tokens__.vars
- * @param {string} tag - Tag fallback for @scope selector (default: "div")
- * @returns {string} Compiled @scope CSS string
+ * @returns {string} Compiled @scope CSS string. The scope root is the semantic id class.
  */
-export function compileComponentRules(key, entry = {}, globalTokens = {}, tag = 'div') {
+export function compileComponentRules(key, entry = {}, globalTokens = {}) {
   if (!entry || typeof entry !== 'object') return '';
 
   const localVars = entry.vars || {};
@@ -77,7 +76,7 @@ export function compileComponentRules(key, entry = {}, globalTokens = {}, tag = 
   if (!rootBody.length && !nestedBody.length) return '';
 
   const bodyStr = [rootBody.join(''), nestedBody.join('')].filter(Boolean).join('');
-  return `@scope (${tag}.${key}){:scope{${bodyStr}}}`;
+  return `@scope (.${key}){:scope{${bodyStr}}}`;
 }
 
 /**
@@ -158,6 +157,17 @@ export function resolveTokenInheritance(key, registry = {}, visited = new Set())
 }
 
 /**
+ * Prefix every utility with the map key. A token that already starts with that prefix is left as written.
+ * `breakpoints.md` + `hover:bg-blue` becomes `md:hover:bg-blue`. `md:p-8` under `md` stays `md:p-8`.
+ */
+function prefixUtilityList(prefix, classList) {
+  const mark = prefix.endsWith(':') ? prefix : `${prefix}:`;
+  return classList.split(' ').filter(Boolean).map(token => (
+    token.startsWith(mark) ? token : `${mark}${token}`
+  )).join(' ');
+}
+
+/**
  * Normalizes a single REGISTRY entry (v1.0 string/object or v2.0 structured object)
  * into a flat element attribute object { class: "..." }.
  *
@@ -220,7 +230,7 @@ export function normalizeRegistryEntry(entry, globalTokens = {}) {
     for (const [state, cls] of Object.entries(entry.states)) {
       if (typeof cls === 'string' && cls) {
         const expanded = expandScopedVars(cls, localVars, globalTokens);
-        const formatted = expanded.split(' ').map(c => (c.includes(':') ? c : `${state}:${c}`)).join(' ');
+        const formatted = prefixUtilityList(`${state}:`, expanded);
         classes.push(formatted);
       }
     }
@@ -231,7 +241,7 @@ export function normalizeRegistryEntry(entry, globalTokens = {}) {
     for (const [bp, cls] of Object.entries(entry.breakpoints)) {
       if (typeof cls === 'string' && cls) {
         const expanded = expandScopedVars(cls, localVars, globalTokens);
-        const formatted = expanded.split(' ').map(c => (c.includes(':') ? c : `${bp}:${c}`)).join(' ');
+        const formatted = prefixUtilityList(`${bp}:`, expanded);
         classes.push(formatted);
       }
     }
@@ -242,7 +252,7 @@ export function normalizeRegistryEntry(entry, globalTokens = {}) {
     for (const [cont, cls] of Object.entries(entry.containers)) {
       if (typeof cls === 'string' && cls) {
         const expanded = expandScopedVars(cls, localVars, globalTokens);
-        const formatted = expanded.split(' ').map(c => (c.includes(':') ? c : `${cont}:${c}`)).join(' ');
+        const formatted = prefixUtilityList(`${cont}:`, expanded);
         classes.push(formatted);
       }
     }

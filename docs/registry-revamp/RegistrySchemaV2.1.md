@@ -128,7 +128,7 @@ Used when styling single elements with utility classes.
       "hover": "opacity-90"
     },
     "breakpoints": {
-      "md": "text-sm"
+      "md": "text-sm hover:opacity-100"
     }
   }
 }
@@ -136,7 +136,7 @@ Used when styling single elements with utility classes.
 
 ### Compiled DOM Output:
 ```html
-<span class="badge inline-block px-3 py-1 text-xs font-semibold rounded-full bg-indigo-600 text-white hover:opacity-90 md:text-sm" wdl-comp="badge">
+<span class="badge inline-block px-3 py-1 text-xs font-semibold rounded-full bg-indigo-600 text-white hover:opacity-90 md:text-sm md:hover:opacity-100" wdl-comp="badge">
   New Feature
 </span>
 ```
@@ -240,7 +240,7 @@ Used when defining complete component recipes leveraging inheritance (`uses`), l
 </style>
 
 <style data-wdl="components">
-@scope (div.card) {
+@scope (.card) {
   /* Inherited from card-base + card root rules */
   :scope {
     padding: var(--space-card);
@@ -338,5 +338,5 @@ When `@ruledwdl/core` processes a page via `composePage()` or `renderAll()`:
 1. **Extract Global Tokens**: Converts `REGISTRY.__tokens__.vars` to `:root { --key: val; }` inside `<style data-wdl="theme-tokens">`.
 2. **Resolve Inheritance (`uses`)**: Merges inherited parent `vars`, `base`, `variants`, `states`, `breakpoints`, and `rules` in order.
 3. **Compile Utility Classes**: Normalizes `base`, `variants`, `states`, `breakpoints` into element `class="..."` attributes.
-4. **Compile Scoped CSS Rules**: If `rules` array exists, groups all rules under `@scope (tag.semantic_id)` and appends to `<style data-wdl="components">`.
+4. **Compile Scoped CSS Rules**: If `rules` array exists, groups all rules under `@scope (.semantic_id)` and appends to `<style data-wdl="components">`.
 5. **Render Clean DOM**: Injects standard HTML attributes (`wdl-comp`, `class`, `data-variant`) and returns the complete markup document.

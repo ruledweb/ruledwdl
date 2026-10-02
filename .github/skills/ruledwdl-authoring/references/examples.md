@@ -160,7 +160,27 @@ div.shell>main>article>h1.title<<footer.site_footer
 ```
 div.row>div.col>article>p<@0section.footer
 ```
-- `<@0` de-indents to absolute depth 0 (`div.row` level), making `section.footer` a root-level element sibling of `div.row`.
+- `<@0` de-indents to absolute depth 0 (`div.row` level), making `section.footer` a root-level element sibling of `div.row`. The digit is required. `<@1` climbs to depth 1.
+
+```
+div.drawer>aside.panel>div.header>button.close<@vertical-menu
+```
+
+Core only, from `renderAll`. The bare `<@` climbs one level. `button.close` is inside `div.header`, so `@vertical-menu` is inside `aside.panel`, beside `div.header`. It is not a sibling of `div.drawer`.
+
+```
+div.drawer
+  aside.panel
+    div.header
+      button.close
+    @vertical-menu
+```
+
+```html
+<div class="drawer" wdl-comp="drawer"><aside class="panel" wdl-comp="panel"><div class="header" wdl-comp="header"><button class="close" wdl-comp="close"></button></div><@vertical-menu wdl-comp="@vertical-menu"></@vertical-menu></aside></div>
+```
+
+The printed tag is `<@vertical-menu></@vertical-menu>`. A missing digit is not depth 0. Write `<@0` for depth 0 and `<@1` for depth 1.
 
 ```
 div.row>div.col>article>p<*2section.side

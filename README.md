@@ -13,7 +13,7 @@
 - **Host-Agnostic Engine**: Zero framework overhead — runs natively in Node.js, Cloudflare Workers, Edge runtimes, or modern browsers with **0 build tools**.
 - **Registry Schema V2.1**: Native browser **Scoped CSS Rules (`@scope`)** support via flat `rules: [{ selector, media?, css }]` arrays compiled directly into `<style data-wdl="components">`.
 - **Variant Attribute Generation**: Automatic `data-variant="..."` attribute emission and `:scope[data-variant="..."]` CSS selector mapping.
-- **Layers Component Expressions**: Ultra-lean component syntax using WDL Layers expressions (`tag.semantic_id`, `>`, `+`, `<` de-indent/subset, `<*N` repeaters, `<@N` depth reference, `*` data loops) backed by `WDLDomTree`.
+- **Layers Component Expressions**: Ultra-lean component syntax using WDL Layers expressions (`tag.semantic_id`, `>`, `+`, `<` de-indent/subset, `<*N` repeaters, `<@N` depth reference with a required digit, `*` data loops) backed by `WDLDomTree`. A bare `<@` climbs one level and core prints `<@name></@name>`. The worked example is in `docs/ruledwdl-reference.md`.
 - **Pluggable Event Adapter (`@ruledwdl/events`)**: Declarative `:event.modifier` DOM event routing (`:click`, `:input`, `:submit.prevent`, `:keydown.enter`) connecting rendered component elements to JS handlers.
 - **Design Token Cascade**: Layered design and brand tokens integrated directly into WDL JSON and compiled into `<style data-wdl="theme-tokens">`, `design-tokens`, and `brand-tokens`.
 - **100% Zero-Dependency Core**: Zero external markdown runtime requirement; includes pluggable `transformData` and `transformText` hooks for external markdown engines (`marked`, `markdown-it`, `remark`).

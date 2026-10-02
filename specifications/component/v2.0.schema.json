@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.ruledwdl.dev/specification/component/v2.0.schema.json",
+  "title": "WDL COMPONENTS v2.0",
+  "description": "One COMPONENTS entry, or an array of entries. A layers entry draws HTML. A component reference inserts a stored component. Core does not define a schema for DATA. The author supplies DATA_SCHEMA beside DATA.",
+  "oneOf": [
+    { "$ref": "#/$defs/entry" },
+    {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  ],
+  "$defs": {
+    "attrMap": {
+      "type": "object",
+      "description": "Keys are .semantic_id or a tag name. Values are HTML attributes for that node. .semantic_id is the match. tag.semantic_id never matches.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "tuple": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "integer", "minimum": 0, "description": "Absolute depth. 0 is the root." },
+        {
+          "type": "string",
+          "description": "Operator. Empty at the root. > child, + sibling, < one climb, <*N climbs N, <@N climbs to depth N. A bare <@ is not an operator."
+        },
+        { "type": "string", "description": "HTML tag." },
+        { "type": "string", "description": "One semantic id. A second dot class is rejected by the parser." },
+        {
+          "type": ["string", "null"],
+          "description": "Repeater. A number string multiplies the node. Any other string is a DATA loop key. null means once."
+        }
+      ],
+      "items": false,
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "layersEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layers"],
+      "properties": {
+        "$version": { "const": "2.0" },
+        "layers": {
+          "description": "A layers string, a list of layers lines, or a list of 5-tuples.",
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/tuple" }
+            }
+          ]
+        },
+        "attr": { "$ref": "#/$defs/attrMap" },
+        "script_deps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Script ids loaded when this component renders."
+        }
+      }
+    },
+    "referenceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component"],
+      "properties": {
+        "component": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stored component id. The nested resolver replaces this entry with that component's layers."
+        },
+        "data_overrides": {
+          "type": "object",
+          "description": "Values merged over the component DATA for this use. The shape is the author's DATA_SCHEMA.",
+          "additionalProperties": true
+        },
+        "style_overrides": {
+          "description": "Attr map merged over the component attr for this use.",
+          "$ref": "#/$defs/attrMap"
+        }
+      }
+    },
+    "entry": {
+      "oneOf": [
+        { "$ref": "#/$defs/layersEntry" },
+        { "$ref": "#/$defs/referenceEntry" }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "$version": "2.0",
+      "layers": "section.hero>h1.title+p.subtitle+a.cta",
+      "attr": {
+        ".title": { "text": "${heading}" },
+        ".subtitle": { "text": "${subheading}" },
+        ".cta": { "text": "Get started", "href": "${href}" }
+      },
+      "script_deps": ["alpine-cdn"]
+    },
+    {
+      "layers": [
+        "form.login",
+        "> h2.title",
+        "+ input.email",
+        "+ button.submit",
+        "<@1 a.forgot"
+      ],
+      "attr": {
+        ".title": { "text": "${page_title}" }
+      }
+    },
+    {
+      "layers": [
+        [0, "", "form", "login", null],
+        [1, ">", "h2", "title", null],
+        [1, "+", "input", "email", null],
+        [1, "+", "button", "submit", null],
+        [1, "<@1", "a", "forgot", null]
+      ]
+    },
+    {
+      "component": "card",
+      "data_overrides": { "title": "${heading}" },
+      "style_overrides": { ".title": { "class": "text-lg" } }
+    }
+  ]
+}

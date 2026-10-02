@@ -12,8 +12,8 @@ By stripping out full-page composition, design token cascading, script bucket ma
 
 - **Tiny Footprint:** Zero external dependencies (no markdown parsers, no DOM sanitizers). Minified bundle is under **13kb**.
 - **Pure Rendering:** Takes `REGISTRY`, `COMPONENTS`, and `DATA` JSON definitions and returns clean HTML strings.
-- **Automatic Head CSS Injection:** Compiles Schema V2.1 Scoped CSS `rules` into native `@scope (tag.semantic_id)` blocks and auto-injects `<style data-wdl="theme-tokens">` and `<style data-wdl="components">` into `document.head`.
-- **WDL Layers Syntax v0.3.x:** Full support for Emmet-like component expressions including `<` parent step-back, `<*N` multi-level repeater, and `<@N` absolute depth reference.
+- **Automatic Head CSS Injection:** Compiles Schema V2.1 Scoped CSS `rules` into native `@scope (.semantic_id)` blocks and auto-injects `<style data-wdl="theme-tokens">` and `<style data-wdl="components">` into `document.head`.
+- **WDL Layers Syntax v0.3.x:** Full support for Emmet-like component expressions including `<` parent step-back, `<*N` multi-level repeater, and `<@N` absolute depth reference. The digit is required: `<@0` is the root and `<@1` is depth 1. A bare `<@` climbs one level and core prints `<@name></@name>`.
 - **Component Identifier Attributes:** Automatically emits `wdl-comp="{semantic-id}"` attributes on generated DOM elements for precise CSS/JS targeting.
 - **Auto-Hydration:** Includes a built-in `hydrate()` function that scans the DOM for elements marked with the `wdl-csr` attribute and automatically renders the corresponding JSON payload into them.
 

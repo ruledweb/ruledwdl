@@ -134,7 +134,7 @@ export function parseLayerToken(expr) {
 }
 
 /**
- * Simple layers string → tree parser (supports >, +, <, <*N, <@N, and *repeator).
+ * Simple layers string → tree parser (supports >, +, <, <*N, <@N with a required digit, and *repeator). A bare <@ climbs one level and core prints <@name>.
  * For full WDL grammar prefer tree from component.layers.tree().
  */
 export function parseLayersSimple(str) {
