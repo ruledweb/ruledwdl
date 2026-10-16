@@ -1,0 +1,37 @@
+{
+  "name": "@ruledwdl/presets",
+  "version": "0.1.0",
+  "description": "Early preset resolver for RuledWDL — resolves active_preset and trims layers, registry, and attr.",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx esbuild src/index.js --bundle --minify --outfile=dist/wdl-presets.min.js --format=esm",
+    "test": "node test/presets.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./src/index.js",
+    "./browser": "./dist/wdl-presets.min.js"
+  },
+  "keywords": [
+    "ruledwdl",
+    "presets",
+    "layers",
+    "wdl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruledweb/ruledwdl.git"
+  },
+  "author": "Pradeep Dabane <pradeep@ruledweb.com>",
+  "license": "AGPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public"
+  }
+}
